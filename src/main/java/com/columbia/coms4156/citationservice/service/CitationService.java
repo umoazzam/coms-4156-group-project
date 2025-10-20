@@ -1,7 +1,11 @@
 package com.columbia.coms4156.citationservice.service;
 
 import com.columbia.coms4156.citationservice.model.Book;
+import com.columbia.coms4156.citationservice.model.Video;
+import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.repository.BookRepository;
+import com.columbia.coms4156.citationservice.repository.VideoRepository;
+import com.columbia.coms4156.citationservice.repository.ArticleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +15,7 @@ import java.util.Optional;
 /**
  * Service class for citation-related business logic and citation generation.
  * Handles CRUD operations for various citation types and citation formatting.
- * Currently supports books, with planned expansion to websites, films, and other sources.
+ * Currently supports books, videos, and articles.
  */
 @Service
 public class CitationService {
@@ -19,78 +23,13 @@ public class CitationService {
     @Autowired
     private BookRepository bookRepository;
 
-    /**
-     * Save a new book to the database.
-     *
-     * @param book The book entity to save
-     * @return The saved book entity with generated ID
-     * @throws IllegalArgumentException if book is null or invalid
-     */
-    public Book saveBook(Book book) {
-        return bookRepository.save(book);
-    }
+    @Autowired
+    private VideoRepository videoRepository;
 
-    /**
-     * Find a book by its ID.
-     *
-     * @param id The unique identifier of the book
-     * @return An Optional containing the book if found, empty otherwise
-     * @throws IllegalArgumentException if id is null
-     */
-    public Optional<Book> findBookById(Long id) {
-        return bookRepository.findById(id);
-    }
+    @Autowired
+    private ArticleRepository articleRepository;
 
-    /**
-     * Get all books from the database.
-     *
-     * @return A list of all books in the database
-     */
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
-    }
-
-    /**
-     * Delete a book by its ID.
-     *
-     * @param id The unique identifier of the book to delete
-     * @throws IllegalArgumentException if id is null
-     */
-    public void deleteBook(Long id) {
-        bookRepository.deleteById(id);
-    }
-
-    /**
-     * Update an existing book with new information.
-     *
-     * @param id The unique identifier of the book to update
-     * @param updatedBook The book entity containing updated information
-     * @return The updated book entity if found, null if not found
-     * @throws IllegalArgumentException if id or updatedBook is null
-     */
-    public Book updateBook(Long id, Book updatedBook) {
-        return bookRepository.findById(id)
-                .map(book -> {
-                    book.setTitle(updatedBook.getTitle());
-                    book.setAuthor(updatedBook.getAuthor());
-                    book.setPublisher(updatedBook.getPublisher());
-                    book.setPublicationYear(updatedBook.getPublicationYear());
-                    book.setCity(updatedBook.getCity());
-                    book.setEdition(updatedBook.getEdition());
-                    book.setIsbn(updatedBook.getIsbn());
-                    return bookRepository.save(book);
-                })
-                .orElse(null);
-    }
-
-    /**
-     * Generate MLA citation for a book.
-     * Follows MLA 8th edition format: Author. Title. Publisher, Year.
-     *
-     * @param book The book entity to generate citation for
-     * @return A properly formatted MLA citation string
-     * @throws IllegalArgumentException if book is null
-     */
+    // CITATION GENERATION METHODS
     public String generateMLACitation(Book book) {
         if (book == null) {
             throw new IllegalArgumentException("Book cannot be null");
@@ -98,17 +37,15 @@ public class CitationService {
 
         StringBuilder citation = new StringBuilder();
 
-        // Author (Last, First)
+        // Simple Implementation: Assumes first, last
         if (book.getAuthor() != null && !book.getAuthor().trim().isEmpty()) {
             citation.append(formatAuthorName(book.getAuthor())).append(". ");
         }
 
-        // Title (italicized - represented with underscores for plain text)
         if (book.getTitle() != null && !book.getTitle().trim().isEmpty()) {
             citation.append("_").append(book.getTitle()).append("_. ");
         }
 
-        // Publisher
         if (book.getPublisher() != null && !book.getPublisher().trim().isEmpty()) {
             citation.append(book.getPublisher());
             if (book.getPublicationYear() != null) {
@@ -118,7 +55,6 @@ public class CitationService {
             }
         }
 
-        // Publication Year
         if (book.getPublicationYear() != null) {
             citation.append(book.getPublicationYear()).append(".");
         }
@@ -126,26 +62,65 @@ public class CitationService {
         return citation.toString().trim();
     }
 
-    /**
-     * Format author name for MLA citation (Last, First).
-     * Handles simple "First Last" format conversion.
-     *
-     * @param author The author name in "First Last" format
-     * @return The author name formatted as "Last, First" for MLA citation
-     * @throws IllegalArgumentException if author is null or empty
-     */
+    public String generateMLACitation(Video video) {
+        if (video == null) {
+            throw new IllegalArgumentException("Video cannot be null");
+        }
+        StringBuilder citation = new StringBuilder();
+        if (video.getAuthor() != null && !video.getAuthor().trim().isEmpty()) {
+            citation.append(formatAuthorName(video.getAuthor())).append(". ");
+        }
+        if (video.getTitle() != null && !video.getTitle().trim().isEmpty()) {
+            citation.append("_").append(video.getTitle()).append("_. ");
+        }
+        if (video.getPlatform() != null && !video.getPlatform().trim().isEmpty()) {
+            citation.append(video.getPlatform());
+            if (video.getReleaseYear() != null) citation.append(", "); else citation.append(". ");
+        }
+        if (video.getReleaseYear() != null) {
+            citation.append(video.getReleaseYear()).append(".");
+        }
+        return citation.toString().trim();
+    }
+
+    public String generateMLACitation(Article article) {
+        if (article == null) {
+            throw new IllegalArgumentException("Article cannot be null");
+        }
+        StringBuilder citation = new StringBuilder();
+        if (article.getAuthor() != null && !article.getAuthor().trim().isEmpty()) {
+            citation.append(formatAuthorName(article.getAuthor())).append(". ");
+        }
+        if (article.getTitle() != null && !article.getTitle().trim().isEmpty()) {
+            citation.append('"').append(article.getTitle()).append("." + '"' + " ");
+        }
+        if (article.getJournal() != null && !article.getJournal().trim().isEmpty()) {
+            citation.append(article.getJournal());
+            if (article.getVolume() != null && !article.getVolume().trim().isEmpty()) {
+                citation.append(", vol. ").append(article.getVolume());
+            }
+            if (article.getIssue() != null && !article.getIssue().trim().isEmpty()) {
+                citation.append(", no. ").append(article.getIssue());
+            }
+            if (article.getPublicationYear() != null) {
+                citation.append(", ").append(article.getPublicationYear());
+            }
+            citation.append(".");
+        }
+        return citation.toString().trim();
+    }
+
     private String formatAuthorName(String author) {
         if (author == null || author.trim().isEmpty()) {
             throw new IllegalArgumentException("Author name cannot be null or empty");
         }
 
-        // Simple implementation: assumes "First Last" format
         String[] parts = author.trim().split("\\s+");
         if (parts.length >= 2) {
             String firstName = parts[0];
             String lastName = parts[parts.length - 1];
             return lastName + ", " + firstName;
         }
-        return author; // Return as-is if format is unclear
+        return author;
     }
 }
