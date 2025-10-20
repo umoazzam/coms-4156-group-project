@@ -1,0 +1,19 @@
+# Ignore local development and secret property files
+src/main/resources/application-dev.properties
+
+# Maven
+/target/
+
+# IDEA
+/.idea/
+*.iml
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+

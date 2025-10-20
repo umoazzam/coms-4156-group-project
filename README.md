@@ -23,21 +23,40 @@ An API-based citation creation and management service that allows clients to bui
 src/
 ├── main/
 │   ├── java/com/columbia/coms4156/citationservice/
-│   │   ├── CitationServiceApplication.java     # Main application class
-│   │   ├── controller/
-│   │   │   └── BookController.java             # REST API endpoints
-│   │   ├── model/
-│   │   │   └── Book.java                       # Book entity model
-│   │   ├── repository/
-│   │   │   └── BookRepository.java             # Data access layer
-│   │   └── service/
-│   │       └── BookService.java                # Business logic layer
+│   │   ├── CitationServiceApplication.java         # Main application
+│   │   ├── controller/                             # API Endpoints
+│   │   │   ├── CitationController.java
+│   │   │   └── SourceController.java
+│   │   ├── model/                               
+│   │   │   ├── Article.java
+│   │   │   ├── Book.java
+│   │   │   ├── Citation.java
+│   │   │   ├── Source.java
+│   │   │   ├── Submission.java
+│   │   │   ├── User.java
+│   │   │   └── Video.java
+│   │   ├── repository/                             # Database Method Management
+│   │   │   ├── ArticleRepository.java
+│   │   │   ├── BookRepository.java
+│   │   │   ├── CitationRepository.java
+│   │   │   ├── SubmissionRepository.java
+│   │   │   ├── UserRepository.java
+│   │   │   └── VideoRepository.java
+│   │   ├── service/                                # Backend Logic
+│   │   │   ├── CitationService.java
+│   │   │   └── SourceService.java
+│   │   └── utils/
+│   │       └──DatabaseStartupCheck.java           # Checks database connection
 │   └── resources/
-│       └── application.properties              # Application configuration
+│       ├── application.properties
+│       └── (local) application-dev.properties  # NOT committed — see DB section
 └── test/
     └── java/com/columbia/coms4156/citationservice/
         └── CitationServiceApplicationTests.java
 ```
+
+## Class and Database Design
+See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design. Read up on the reasoning for why certain classes are there before creating the rest of the endpoints.
 
 ## Getting Started
 
@@ -59,6 +78,14 @@ src/
    mvn clean compile
    ```
 
+3. **Connect to the Database**
+  - Add this file to your local repo from other devs. Do NOT commit it to version control:
+      - `src/main/resources/application-dev.properties`
+      - This file contains environment-specific credentials and connection settings used when running the app against an external (non-H2) database.
+  - Navigate to this [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page and turn on the server instance.
+  - Before you can connect from your machine, add your public IP address to the Cloud SQL instance's authorized networks. If you do not add your IP, the instance will refuse connections. Use the Cloud Console networking page for the instance:
+      - https://console.cloud.google.com/sql/instances/ase-project/connections/networking?authuser=1&project=not-founders
+
 3. **Run the application**
    ```bash
    mvn spring-boot:run
@@ -66,29 +93,45 @@ src/
 
 4. **Access the application**
    - API Base URL: `http://localhost:8080`
-   - H2 Console (for database inspection): `http://localhost:8080/h2-console`
-     - JDBC URL: `jdbc:h2:mem:citationdb`
-     - Username: `sa`
-     - Password: (leave empty)
+   - Database: https://console.cloud.google.com/sql/instances/ase-project/studio?authuser=1&project=not-founders 
+      - Access given upon request.
+
+5. **Tear Down**
+  - Once done with using the application, ensure you turn off the CloudSQL server on the [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page.
 
 ## API Endpoints
 
-### Book Management
+### SourceController (Not for Main Functionality)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/books` | Create a new book |
-| GET | `/api/books` | Get all books |
-| GET | `/api/books/{id}` | Get a book by ID |
-| PUT | `/api/books/{id}` | Update a book |
-| DELETE | `/api/books/{id}` | Delete a book |
+| POST | `/api/source/book` | Create a new Book |
+| GET  | `/api/source/book` | Get all Books |
+| GET  | `/api/source/book/{id}` | Get a Book by ID |
+| PUT  | `/api/source/book/{id}` | Update a Book |
+| DELETE | `/api/source/book/{id}` | Delete a Book |
+| POST | `/api/source/video` | Create a new Video |
+| GET  | `/api/source/video` | Get all Videos |
+| GET  | `/api/source/video/{id}` | Get a Video by ID |
+| PUT  | `/api/source/video/{id}` | Update a Video |
+| DELETE | `/api/source/video/{id}` | Delete a Video |
+| POST | `/api/source/article` | Create a new Article |
+| GET  | `/api/source/article` | Get all Articles |
+| GET  | `/api/source/article/{id}` | Get an Article by ID |
+| PUT  | `/api/source/article/{id}` | Update an Article |
+| DELETE | `/api/source/article/{id}` | Delete an Article |
 
-### Citation Generation
 
+### CitationController
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/books/{id}/citation` | Generate MLA citation for stored book |
-| POST | `/api/books/citation` | Generate MLA citation from book data (without saving) |
+| GET | `/api/cite/book/{id}` | Generate MLA citation for a stored Book by ID |
+| POST | `/api/cite/book` | Generate MLA citation from provided Book JSON (no save) |
+| GET | `/api/cite/video/{id}` | Generate MLA citation for a stored Video by ID |
+| POST | `/api/cite/video/citation` | Generate MLA citation from provided Video JSON (no save) |
+| GET | `/api/cite/article/{id}/citation` | Generate MLA citation for a stored Article by ID |
+| POST | `/api/cite/article/citation` | Generate MLA citation from provided Article JSON (no save) |
+
 
 ## API Usage Examples
 
@@ -148,21 +191,20 @@ Orwell, George. _1984_. Secker & Warburg, 1949.
 4. Set Content-Type header to `application/json` for POST/PUT requests
 
 ## Development Notes
-
-- The application uses an in-memory H2 database that resets on each restart
-- MLA citation format follows basic academic standards
-- Input validation is implemented for required fields
 - CORS is enabled for all origins (development setup)
 
 ## Next Steps
 
 This starter code provides:
-- ✅ Complete Spring Boot application structure
-- ✅ REST API endpoints for book management
+- ✅ Class structure for scalable citations: see LINK for details on intended implementation.
+- ✅ Sample REST API endpoints for Source object management and placeholder Citation endpoints
 - ✅ Basic MLA citation generation
-- ✅ In-memory database setup
-- ✅ Input validation
-- ✅ Error handling
+- ✅ PostgreSQL Database Connection
 
-Ready for enhancement with additional citation formats, persistent storage, and advanced features.
+Codebase is ready for: 
+- API endpoint creation & testing (also check the Database to ensure objects are being saved)
+  - This will involve creating new controllers such as UserController and SubmissionController
+  - The SubmissionController will be the main functionality of our application. SourceController is a placeholder. Please see [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design & the Project Proposal document for information on how the main API should be setup.
+- User authentication and API endpoint protection
+- Code style checks
 
