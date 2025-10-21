@@ -4,8 +4,12 @@ An API-based citation creation and management service that allows clients to bui
 
 ## Current Features
 
-- **MLA Citation Generation**: Automatically formats book information into proper MLA citations
+- **Multi-Style Citation Generation**: Supports MLA, APA, and Chicago citation formats
+- **Single Source Citations**: Generate citations for individual sources with style and backfill options
+- **Group Citation Generation**: Generate citations for all sources in a submission group
 - **Book Management**: Full CRUD operations for book records
+- **Video Management**: Full CRUD operations for video records  
+- **Article Management**: Full CRUD operations for article records
 - **REST API**: Clean RESTful endpoints for all operations
 - **In-Memory Database**: H2 database for development and testing
 
@@ -131,6 +135,8 @@ See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit)
 | POST | `/api/cite/video/citation` | Generate MLA citation from provided Video JSON (no save) |
 | GET | `/api/cite/article/{id}/citation` | Generate MLA citation for a stored Article by ID |
 | POST | `/api/cite/article/citation` | Generate MLA citation from provided Article JSON (no save) |
+| **GET** | **`/api/cite/source/{sourceId}`** | **Generate citation for a single source with style and backfill options** |
+| **GET** | **`/api/cite/group/{submissionId}`** | **Generate citations for all sources in a submission group** |
 
 
 ## API Usage Examples
@@ -166,6 +172,45 @@ See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit)
 **Response:**
 ```
 Orwell, George. _1984_. Secker & Warburg, 1949.
+```
+
+### Generating Citations (New Proposal Endpoints)
+
+**GET** `http://localhost:8080/api/cite/source/{sourceId}?style=APA&backfill=false`
+
+Generate a citation for a single source with specified style and backfill options.
+
+**Parameters:**
+- `sourceId` (path): The unique identifier of the source
+- `style` (query, optional): Citation style - "MLA", "APA", or "Chicago" (default: "MLA")
+- `backfill` (query, optional): Whether to include backfill information (default: false)
+
+**Response:**
+```json
+{
+  "CitationID": "123",
+  "CitationString": "Orwell, G. (1949). 1984. Secker & Warburg, London."
+}
+```
+
+**GET** `http://localhost:8080/api/cite/group/{submissionId}?style=Chicago&backfill=false`
+
+Generate citations for all sources in a submission group.
+
+**Parameters:**
+- `submissionId` (path): The unique identifier of the submission group
+- `style` (query, optional): Citation style - "MLA", "APA", or "Chicago" (default: "MLA")
+- `backfill` (query, optional): Whether to include backfill information (default: false)
+
+**Response:**
+```json
+{
+  "submissionId": 456,
+  "Citations": {
+    "123": "Orwell, George. \"1984.\" London: Secker & Warburg, 1949.",
+    "124": "Lee, Harper. \"To Kill a Mockingbird.\" Philadelphia: J.B. Lippincott & Co., 1960."
+  }
+}
 ```
 
 ### Book JSON Schema
@@ -205,6 +250,7 @@ Codebase is ready for:
 - API endpoint creation & testing (also check the Database to ensure objects are being saved)
   - This will involve creating new controllers such as UserController and SubmissionController
   - The SubmissionController will be the main functionality of our application. SourceController is a placeholder. Please see [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design & the Project Proposal document for information on how the main API should be setup.
+- **Backfill functionality**: Currently the `backfill` parameter is accepted but not implemented. This would involve integrating with external APIs to automatically populate missing metadata.
 - User authentication and API endpoint protection
 - Code style checks
 
