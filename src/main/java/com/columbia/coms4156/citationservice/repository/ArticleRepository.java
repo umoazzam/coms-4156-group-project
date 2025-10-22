@@ -8,6 +8,19 @@ import java.util.List;
 
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
+    /**
+     * Finds all articles by the specified author.
+     *
+     * @param author the author name to search for
+     * @return a list of articles by the specified author
+     */
     List<Article> findByAuthor(String author);
+
+    /**
+     * Finds all articles whose title contains the specified text (case-insensitive).
+     *
+     * @param title the title text to search for
+     * @return a list of articles whose titles contain the specified text
+     */
     List<Article> findByTitleContainingIgnoreCase(String title);
 }

@@ -115,14 +115,16 @@
 
     <!-- Checks for class design -->
     <module name="DesignForExtension"/>
-    <module name="FinalClass"/>
+    <!-- DISABLED: FinalClass rule to avoid forcing classes to be final -->
+    <!-- <module name="FinalClass"/> -->
     <module name="HideUtilityClassConstructor"/>
     <module name="InterfaceIsType"/>
     <module name="VisibilityModifier"/>
 
     <!-- Miscellaneous other checks -->
     <module name="ArrayTypeStyle"/>
-    <module name="FinalParameters"/>
+    <!-- DISABLED: FinalParameters rule to avoid forcing parameters to be final -->
+    <!-- <module name="FinalParameters"/> -->
     <module name="TodoComment"/>
     <module name="UpperEll"/>
 

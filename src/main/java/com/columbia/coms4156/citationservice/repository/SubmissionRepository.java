@@ -8,6 +8,12 @@ import java.util.List;
 
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
+    /**
+     * Finds all submissions associated with the specified user ID.
+     *
+     * @param userId the user ID to search for
+     * @return a list of submissions for the specified user
+     */
     List<Submission> findByUserId(Long userId);
 }
 
