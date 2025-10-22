@@ -114,7 +114,8 @@
     <module name="SimplifyBooleanReturn"/>
 
     <!-- Checks for class design -->
-    <module name="DesignForExtension"/>
+    <!-- DISABLED: DesignForExtension rule to avoid forcing inheritance design documentation -->
+    <!-- <module name="DesignForExtension"/> -->
     <!-- DISABLED: FinalClass rule to avoid forcing classes to be final -->
     <!-- <module name="FinalClass"/> -->
     <module name="HideUtilityClassConstructor"/>
