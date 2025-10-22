@@ -1,8 +1,6 @@
 package com.columbia.coms4156.citationservice.controller;
 
-import com.columbia.coms4156.citationservice.model.Book;
-import com.columbia.coms4156.citationservice.model.Video;
-import com.columbia.coms4156.citationservice.model.Article;
+import com.columbia.coms4156.citationservice.model.*;
 import com.columbia.coms4156.citationservice.service.CitationService;
 import com.columbia.coms4156.citationservice.service.SourceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,6 +143,54 @@ public class CitationController {
       return new ResponseEntity<>(citation, HttpStatus.OK);
     } catch (Exception e) {
       return new ResponseEntity<>("Error generating citation", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Generate citation for a single source by sourceId with specified style and backfill option.
+   *
+   * @param sourceId The unique identifier of the source to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
+   * @param backfill Whether to include backfill information (currently not implemented)
+   * @return ResponseEntity containing CitationResponse with HTTP 200 status if successful,
+   * HTTP 404 with error message if source not found, or HTTP 400 if invalid parameters
+   */
+  @GetMapping("/source/{sourceId}")
+  public ResponseEntity<CitationResponse> generateCitationForSource(
+      @PathVariable Long sourceId,
+      @RequestParam(defaultValue = "MLA") String style,
+      @RequestParam(defaultValue = "false") boolean backfill) {
+    try {
+      CitationResponse response = citationService.generateCitationForSource(sourceId, style, backfill);
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (IllegalArgumentException e) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Generate citations for all sources in a submission group.
+   *
+   * @param submissionId The unique identifier of the submission group
+   * @param style The citation style (MLA, APA, Chicago)
+   * @param backfill Whether to include backfill information (currently not implemented)
+   * @return ResponseEntity containing GroupCitationResponse with HTTP 200 status if successful,
+   * HTTP 404 with error message if submission not found, or HTTP 400 if invalid parameters
+   */
+  @GetMapping("/group/{submissionId}")
+  public ResponseEntity<GroupCitationResponse> generateCitationsForGroup(
+      @PathVariable Long submissionId,
+      @RequestParam(defaultValue = "MLA") String style,
+      @RequestParam(defaultValue = "false") boolean backfill) {
+    try {
+      GroupCitationResponse response = citationService.generateCitationsForGroup(submissionId, style, backfill);
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (IllegalArgumentException e) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
