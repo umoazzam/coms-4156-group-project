@@ -11,14 +11,14 @@ An API-based citation creation and management service that allows clients to bui
 - **Video Management**: Full CRUD operations for video records  
 - **Article Management**: Full CRUD operations for article records
 - **REST API**: Clean RESTful endpoints for all operations
-- **In-Memory Database**: H2 database for development and testing
+- **Postgres Database**: Postgres database for development and testing using Google Cloud SQL
 
 ## Technology Stack
 
 - **Java 17**
 - **Spring Boot 3.1.5**
 - **Spring Data JPA**
-- **H2 Database** (in-memory)
+- **Postgres** Hosted on Google Cloud SQL
 - **Maven** for dependency management
 
 ## Project Structure
@@ -230,10 +230,10 @@ Generate citations for all sources in a submission group.
 
 ## Testing with Postman
 
-1. Import the following endpoints into Postman
-2. Set the base URL to `http://localhost:8080`
-3. Use the JSON examples above for request bodies
-4. Set Content-Type header to `application/json` for POST/PUT requests
+These are API tests you can use to exercise the service endpoints (create, retrieve, update, delete sources and generate citations).
+
+[Postman collection — API tests](https://web.postman.co/workspace/My-Workspace~944de483-7347-4047-89cb-e75c81e1ba7b/collection/32914220-d96cfb1c-3cc6-48fc-993f-46baea892753?action=share&source=copy-link&creator=32914220)
+
 
 ## Development Notes
 - CORS is enabled for all origins (development setup)
@@ -253,4 +253,3 @@ Codebase is ready for:
 - **Backfill functionality**: Currently the `backfill` parameter is accepted but not implemented. This would involve integrating with external APIs to automatically populate missing metadata.
 - User authentication and API endpoint protection
 - Code style checks
-
