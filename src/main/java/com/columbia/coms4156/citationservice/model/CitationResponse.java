@@ -7,43 +7,76 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class CitationResponse {
 
+    /**
+     * The unique identifier for the citation.
+     */
     @JsonProperty("CitationID")
     private String citationId;
 
+    /**
+     * The formatted citation string.
+     */
     @JsonProperty("CitationString")
     private String citationString;
 
-    // Constructors
-    public CitationResponse() {}
+    /**
+     * Default constructor for CitationResponse.
+     */
+    public CitationResponse() { }
 
-    public CitationResponse(String citationId, String citationString) {
-        this.citationId = citationId;
-        this.citationString = citationString;
+    /**
+     * Constructor for CitationResponse with citation details.
+     *
+     * @param citationIdParam the unique identifier for the citation
+     * @param citationStringParam the formatted citation string
+     */
+    public CitationResponse(String citationIdParam, String citationStringParam) {
+        this.citationId = citationIdParam;
+        this.citationString = citationStringParam;
     }
 
-    // Getters and Setters
+    /**
+     * Gets the citation ID.
+     *
+     * @return the citation ID
+     */
     public String getCitationId() {
         return citationId;
     }
 
-    public void setCitationId(String citationId) {
-        this.citationId = citationId;
+    /**
+     * Sets the citation ID.
+     *
+     * @param citationIdParam the citation ID to set
+     */
+    public void setCitationId(String citationIdParam) {
+        this.citationId = citationIdParam;
     }
 
+    /**
+     * Gets the citation string.
+     *
+     * @return the citation string
+     */
     public String getCitationString() {
         return citationString;
     }
 
-    public void setCitationString(String citationString) {
-        this.citationString = citationString;
+    /**
+     * Sets the citation string.
+     *
+     * @param citationStringParam the citation string to set
+     */
+    public void setCitationString(String citationStringParam) {
+        this.citationString = citationStringParam;
     }
 
     @Override
     public String toString() {
-        return "CitationResponse{" +
-                "citationId='" + citationId + '\'' +
-                ", citationString='" + citationString + '\'' +
-                '}';
+        return "CitationResponse{"
+                + "citationId='" + citationId + '\''
+                + ", citationString='" + citationString + '\''
+                + '}';
     }
 }
 

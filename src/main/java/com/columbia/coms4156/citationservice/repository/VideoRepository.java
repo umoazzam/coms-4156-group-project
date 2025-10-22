@@ -8,7 +8,20 @@ import java.util.List;
 
 @Repository
 public interface VideoRepository extends JpaRepository<Video, Long> {
+    /**
+     * Finds all videos by the specified author.
+     *
+     * @param author the author name to search for
+     * @return a list of videos by the specified author
+     */
     List<Video> findByAuthor(String author);
+
+    /**
+     * Finds all videos whose title contains the specified text (case-insensitive).
+     *
+     * @param title the title text to search for
+     * @return a list of videos whose titles contain the specified text
+     */
     List<Video> findByTitleContainingIgnoreCase(String title);
 }
 

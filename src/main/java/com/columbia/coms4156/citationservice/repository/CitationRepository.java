@@ -8,5 +8,11 @@ import java.util.List;
 
 @Repository
 public interface CitationRepository extends JpaRepository<Citation, Long> {
+    /**
+     * Finds all citations associated with the specified submission ID.
+     *
+     * @param submissionId the submission ID to search for
+     * @return a list of citations for the specified submission
+     */
     List<Citation> findBySubmissionId(Long submissionId);
 }

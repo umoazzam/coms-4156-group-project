@@ -1,6 +1,8 @@
 package com.columbia.coms4156.citationservice.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 /**
  * Model class representing a Book entity for citation generation.
@@ -59,7 +61,9 @@ public class Book extends Source {
      * Default constructor for JPA entity creation.
      * Creates a new Book instance with no initial values.
      */
-    public Book() { super(); }
+    public Book() {
+        super();
+    }
 
     /**
      * Constructor for creating a Book with required fields.
@@ -84,10 +88,10 @@ public class Book extends Source {
     /**
      * Sets the publisher of the book.
      *
-     * @param publisher The publisher to set (optional field)
+     * @param publisherParam The publisher to set (optional field)
      */
-    public void setPublisher(String publisher) {
-        this.publisher = publisher;
+    public void setPublisher(String publisherParam) {
+        this.publisher = publisherParam;
     }
 
     /**
@@ -102,10 +106,10 @@ public class Book extends Source {
     /**
      * Sets the publication year of the book.
      *
-     * @param publicationYear The publication year to set (optional field)
+     * @param publicationYearParam The publication year to set (optional field)
      */
-    public void setPublicationYear(Integer publicationYear) {
-        this.publicationYear = publicationYear;
+    public void setPublicationYear(Integer publicationYearParam) {
+        this.publicationYear = publicationYearParam;
     }
 
     /**
@@ -120,10 +124,10 @@ public class Book extends Source {
     /**
      * Sets the publication city of the book.
      *
-     * @param city The publication city to set (optional field)
+     * @param cityParam The publication city to set (optional field)
      */
-    public void setCity(String city) {
-        this.city = city;
+    public void setCity(String cityParam) {
+        this.city = cityParam;
     }
 
     /**
@@ -138,10 +142,10 @@ public class Book extends Source {
     /**
      * Sets the edition information of the book.
      *
-     * @param edition The edition to set (optional field)
+     * @param editionParam The edition to set (optional field)
      */
-    public void setEdition(String edition) {
-        this.edition = edition;
+    public void setEdition(String editionParam) {
+        this.edition = editionParam;
     }
 
     /**
@@ -156,10 +160,10 @@ public class Book extends Source {
     /**
      * Sets the ISBN of the book.
      *
-     * @param isbn The ISBN to set (optional field)
+     * @param isbnParam The ISBN to set (optional field)
      */
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
+    public void setIsbn(String isbnParam) {
+        this.isbn = isbnParam;
     }
 
     /**
@@ -170,15 +174,15 @@ public class Book extends Source {
      */
     @Override
     public String toString() {
-        return "Book{" +
-                "id=" + getId() +
-                ", title='" + getTitle() + '\'' +
-                ", author='" + getAuthor() + '\'' +
-                ", publisher='" + publisher + '\'' +
-                ", publicationYear=" + publicationYear +
-                ", city='" + city + '\'' +
-                ", edition='" + edition + '\'' +
-                ", isbn='" + isbn + '\'' +
-                '}';
+        return "Book{"
+                + "id=" + getId()
+                + ", title='" + getTitle() + '\''
+                + ", author='" + getAuthor() + '\''
+                + ", publisher='" + publisher + '\''
+                + ", publicationYear=" + publicationYear
+                + ", city='" + city + '\''
+                + ", edition='" + edition + '\''
+                + ", isbn='" + isbn + '\''
+                + '}';
     }
 }

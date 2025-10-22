@@ -1,7 +1,16 @@
 package com.columbia.coms4156.citationservice.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
  * Citation entity representing a single citation within a Submission.
@@ -12,85 +21,159 @@ import jakarta.persistence.*;
 @Table(name = "citations")
 public class Citation {
 
-    // Instance Variables
+    /**
+     * The unique identifier for the citation.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * The submission that contains this citation.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submission_id")
     @JsonBackReference
     private Submission submission;
 
+    /**
+     * JSON string containing user-provided metadata for the citation.
+     */
     @Lob
     @Column(name = "user_input_metadata", columnDefinition = "TEXT")
     private String userInputMetaData; // JSON string provided by user
 
+    /**
+     * The ID of the media record (Book/Video/Article).
+     */
     @Column(name = "media_id")
     private Long mediaId; // id of the media record (Book/Video/Article)
 
+    /**
+     * The type of media (e.g., "book", "video", "article").
+     */
     @Column(name = "media_type")
     private String mediaType; // e.g. "book", "video", "article"
 
-    // Constructors
-    public Citation() {}
+    /**
+     * Default constructor for Citation.
+     */
+    public Citation() { }
 
-    public Citation(Submission submission, String userInputMetaData, Long mediaId, String mediaType) {
-        this.submission = submission;
-        this.userInputMetaData = userInputMetaData;
-        this.mediaId = mediaId;
-        this.mediaType = mediaType;
+    /**
+     * Constructor for Citation with all required fields.
+     *
+     * @param submissionParam the submission containing this citation
+     * @param userInputMetaDataParam the user-provided metadata
+     * @param mediaIdParam the media ID
+     * @param mediaTypeParam the media type
+     */
+    public Citation(Submission submissionParam, String userInputMetaDataParam,
+                   Long mediaIdParam, String mediaTypeParam) {
+        this.submission = submissionParam;
+        this.userInputMetaData = userInputMetaDataParam;
+        this.mediaId = mediaIdParam;
+        this.mediaType = mediaTypeParam;
     }
 
-    // Methods
+    /**
+     * Gets the citation ID.
+     *
+     * @return the citation ID
+     */
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    /**
+     * Sets the citation ID.
+     *
+     * @param idParam the citation ID to set
+     */
+    public void setId(Long idParam) {
+        this.id = idParam;
     }
 
+    /**
+     * Gets the submission containing this citation.
+     *
+     * @return the submission
+     */
     public Submission getSubmission() {
         return submission;
     }
 
-    public void setSubmission(Submission submission) {
-        this.submission = submission;
+    /**
+     * Sets the submission containing this citation.
+     *
+     * @param submissionParam the submission to set
+     */
+    public void setSubmission(Submission submissionParam) {
+        this.submission = submissionParam;
     }
 
+    /**
+     * Gets the user input metadata.
+     *
+     * @return the user input metadata
+     */
     public String getUserInputMetaData() {
         return userInputMetaData;
     }
 
-    public void setUserInputMetaData(String userInputMetaData) {
-        this.userInputMetaData = userInputMetaData;
+    /**
+     * Sets the user input metadata.
+     *
+     * @param userInputMetaDataParam the user input metadata to set
+     */
+    public void setUserInputMetaData(String userInputMetaDataParam) {
+        this.userInputMetaData = userInputMetaDataParam;
     }
 
+    /**
+     * Gets the media ID.
+     *
+     * @return the media ID
+     */
     public Long getMediaId() {
         return mediaId;
     }
 
-    public void setMediaId(Long mediaId) {
-        this.mediaId = mediaId;
+    /**
+     * Sets the media ID.
+     *
+     * @param mediaIdParam the media ID to set
+     */
+    public void setMediaId(Long mediaIdParam) {
+        this.mediaId = mediaIdParam;
     }
 
+    /**
+     * Gets the media type.
+     *
+     * @return the media type
+     */
     public String getMediaType() {
         return mediaType;
     }
 
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
+    /**
+     * Sets the media type.
+     *
+     * @param mediaTypeParam the media type to set
+     */
+    public void setMediaType(String mediaTypeParam) {
+        this.mediaType = mediaTypeParam;
     }
 
     @Override
     public String toString() {
-        return "Citation{" +
-                "id=" + id +
-                ", submissionId=" + (submission != null ? submission.getId() : null) +
-                ", mediaId=" + mediaId +
-                ", mediaType='" + mediaType + '\'' +
-                '}';
+        return "Citation{"
+                + "id=" + id
+                + ", submissionId=" + (submission != null ? submission.getId() : null)
+                + ", mediaId=" + mediaId
+                + ", mediaType='" + mediaType + '\''
+                + '}';
     }
 }
 

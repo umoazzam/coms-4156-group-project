@@ -1,12 +1,23 @@
 package com.columbia.coms4156.citationservice.controller;
 
-import com.columbia.coms4156.citationservice.model.*;
+import com.columbia.coms4156.citationservice.model.Article;
+import com.columbia.coms4156.citationservice.model.Book;
+import com.columbia.coms4156.citationservice.model.CitationResponse;
+import com.columbia.coms4156.citationservice.model.GroupCitationResponse;
+import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.service.CitationService;
 import com.columbia.coms4156.citationservice.service.SourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import java.util.Optional;
 
@@ -20,8 +31,15 @@ import java.util.Optional;
 @CrossOrigin(origins = "*")
 public class CitationController {
 
+  /**
+   * Service for citation generation operations.
+   */
   @Autowired
   private CitationService citationService;
+
+  /**
+   * Service for source management operations.
+   */
   @Autowired
   private SourceService sourceService;
 
@@ -51,7 +69,7 @@ public class CitationController {
   /**
    * Generate an MLA format citation given a book.
    *
-   * @param book The book object to generate a citation for. This is an Ad-Hoc creation and the 
+   * @param book The book object to generate a citation for. This is an Ad-Hoc creation and the
    *             book will not be saved.
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if book not found, or HTTP 500 if an error occurs
@@ -89,9 +107,9 @@ public class CitationController {
   }
 
   /**
-   * Generate an MLA format citation given a book.
+   * Generate an MLA format citation given a video.
    *
-   * @param video The video object to generate a citation for. This is an Ad-Hoc creation and the 
+   * @param video The video object to generate a citation for. This is an Ad-Hoc creation and the
    *             video will not be saved.
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if video not found, or HTTP 500 if an error occurs
@@ -129,15 +147,16 @@ public class CitationController {
   }
 
   /**
-   * Generate an MLA format citation given a article.
+   * Generate an MLA format citation given an article.
    *
-   * @param video The video object to generate a citation for. This is an Ad-Hoc creation and the 
-   *             article will not be saved.
+   * @param article The article object to generate a citation for. This is an Ad-Hoc creation
+   *                and the article will not be saved.
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
-   * HTTP 404 with error message if video not found, or HTTP 500 if an error occurs
+   * HTTP 404 with error message if article not found, or HTTP 500 if an error occurs
    */
   @PostMapping("/article/citation")
-  public ResponseEntity<String> generateArticleCitationFromData(@Valid @RequestBody Article article) {
+  public ResponseEntity<String> generateArticleCitationFromData(
+      @Valid @RequestBody Article article) {
     try {
       String citation = citationService.generateMLACitation(article);
       return new ResponseEntity<>(citation, HttpStatus.OK);
@@ -161,7 +180,8 @@ public class CitationController {
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill) {
     try {
-      CitationResponse response = citationService.generateCitationForSource(sourceId, style, backfill);
+      CitationResponse response = citationService.generateCitationForSource(
+          sourceId, style, backfill);
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (IllegalArgumentException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -185,7 +205,8 @@ public class CitationController {
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill) {
     try {
-      GroupCitationResponse response = citationService.generateCitationsForGroup(submissionId, style, backfill);
+      GroupCitationResponse response = citationService.generateCitationsForGroup(
+          submissionId, style, backfill);
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (IllegalArgumentException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
