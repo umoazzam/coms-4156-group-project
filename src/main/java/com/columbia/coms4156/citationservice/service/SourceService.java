@@ -1,14 +1,22 @@
 package com.columbia.coms4156.citationservice.service;
 
-import com.columbia.coms4156.citationservice.model.Book;
-import com.columbia.coms4156.citationservice.model.Video;
-import com.columbia.coms4156.citationservice.model.Article;
+import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
+import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
+import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
+import com.columbia.coms4156.citationservice.model.*;
 import com.columbia.coms4156.citationservice.repository.BookRepository;
 import com.columbia.coms4156.citationservice.repository.VideoRepository;
 import com.columbia.coms4156.citationservice.repository.ArticleRepository;
+import com.columbia.coms4156.citationservice.repository.SubmissionRepository;
+import com.columbia.coms4156.citationservice.repository.CitationRepository;
+import com.columbia.coms4156.citationservice.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +45,31 @@ public class SourceService {
    */
   @Autowired
   private ArticleRepository articleRepository;
+
+  // repositories needed for batch operation
+  @Autowired
+  private SubmissionRepository submissionRepository;
+
+  @Autowired
+  private CitationRepository citationRepository;
+
+  /**
+   * Repository for managing User entities.
+   */
+  @Autowired
+  private UserRepository userRepository;
+
+  /**
+   * ObjectMapper for JSON processing.
+   */
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
+  // Constants for time conversions
+  private static final int SECONDS_IN_MINUTE = 60;
+  private static final int SECONDS_IN_HOUR = 3600;
+
+  // Constant for batch size
+  private static final int DEFAULT_BATCH_SIZE = 3;
 
   // --- Book Methods ---
   /**
@@ -221,5 +254,161 @@ public class SourceService {
               return articleRepository.save(article);
             })
             .orElse(null);
+  }
+
+  /**
+   * Processes a batch of sources: creates a submission group (if submissionId is null) or
+   * appends to existing submission, de-duplicates media by title+author (case-insensitive),
+   * persists media as needed, and creates Citation records linking media to the submission.
+   * Returns submitted submissionId and list of saved citation ids (as strings).
+   */
+  @Transactional
+  public SourceBatchResponse addOrAppendSources(BulkSourceRequest request, Long submissionId) {
+    if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
+      return new SourceBatchResponse(submissionId, new ArrayList<>());
+    }
+
+    String username = null;
+    if (request.getUser() != null) {
+      username = request.getUser().getUsername();
+    }
+
+    // Resolve or create Submission
+    Submission submission;
+    if (submissionId == null) {
+      submission = new Submission();
+      if (username != null) {
+        Optional<User> uOpt = userRepository.findByUsername(username);
+        uOpt.ifPresent(submission::setUser);
+      }
+      submission = submissionRepository.save(submission);
+    } else {
+      submission = submissionRepository.findById(submissionId)
+              .orElseThrow(() -> new IllegalArgumentException("submissionId not found: " + submissionId));
+    }
+
+    List<String> savedCitationIds = new ArrayList<>();
+
+    for (SourceDTO src : request.getSources()) {
+      String type = src.getMediaType() == null ? "" : src.getMediaType().trim().toLowerCase();
+      String title = src.getTitle() == null ? "" : src.getTitle().trim();
+      String author = src.getAuthor() == null ? "" : src.getAuthor().trim();
+
+      Long mediaId = null;
+
+      switch (type) {
+        case "book":
+          // try find by title+author
+          Optional<Book> bOpt = bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+          Book book;
+          if (bOpt.isPresent()) {
+            book = bOpt.get();
+          } else {
+            book = new Book();
+            book.setTitle(title);
+            book.setAuthor(author);
+            book.setIsbn(src.getIsbn());
+            book.setPublisher(src.getPublisher());
+            book.setPublicationYear(src.getYear());
+            book.setCity(null);
+            book.setEdition(null);
+            book = bookRepository.save(book);
+          }
+          mediaId = book.getId();
+          break;
+
+        case "article":
+          Optional<Article> aOpt = articleRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+          Article article;
+          if (aOpt.isPresent()) {
+            article = aOpt.get();
+          } else {
+            article = new Article();
+            article.setTitle(title);
+            article.setAuthor(author);
+            article.setPublicationYear(src.getYear());
+            article.setUrl(src.getUrl());
+            article = articleRepository.save(article);
+          }
+          mediaId = article.getId();
+          break;
+
+        case "video":
+          Optional<Video> vOpt = videoRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+          Video video;
+          if (vOpt.isPresent()) {
+            video = vOpt.get();
+          } else {
+            video = new Video();
+            video.setTitle(title);
+            video.setAuthor(author);
+            video.setDirector(src.getDirector());
+            // convert duration if provided in mm:ss to seconds if possible
+            if (src.getDuration() != null) {
+              Integer seconds = parseDurationToSeconds(src.getDuration());
+              video.setDurationSeconds(seconds);
+            }
+            video.setPlatform(src.getPlatform());
+            video.setUrl(src.getUrl());
+            video.setReleaseYear(src.getYear());
+            video = videoRepository.save(video);
+          }
+          mediaId = video.getId();
+          break;
+
+        default:
+          // unknown mediaType -> skip
+          continue;
+      }
+
+      // create Citation linking submission -> media
+      String userInputJson;
+      try {
+        userInputJson = objectMapper.writeValueAsString(src);
+      } catch (JsonProcessingException e) {
+        userInputJson = "{}";
+      }
+
+      // avoid duplicate citation for same submission+media+type
+      Optional<Citation> existingCitation = citationRepository
+          .findBySubmissionIdAndMediaIdAndMediaType(submission.getId(), mediaId, type);
+      if (existingCitation.isPresent()) {
+        savedCitationIds.add(existingCitation.get().getId().toString());
+      } else {
+        Citation citation = new Citation(submission, userInputJson, mediaId, type);
+        citation = citationRepository.save(citation);
+        savedCitationIds.add(citation.getId().toString());
+      }
+    }
+
+    return new SourceBatchResponse(submission.getId(), savedCitationIds);
+  }
+
+  /**
+   * Parses a duration string into seconds.
+   *
+   * @param duration the duration string in the format hh:mm:ss, mm:ss, or seconds
+   * @return the total duration in seconds, or null if parsing fails
+   */
+  private Integer parseDurationToSeconds(String duration) {
+    try {
+      String[] parts = duration.split(":");
+      int seconds = 0;
+      if (parts.length == 2) {
+        int minutes = Integer.parseInt(parts[0].trim());
+        int secs = Integer.parseInt(parts[1].trim());
+        seconds = minutes * SECONDS_IN_MINUTE + secs;
+      } else if (parts.length == 3) {
+        int hours = Integer.parseInt(parts[0].trim());
+        int minutes = Integer.parseInt(parts[1].trim());
+        int secs = Integer.parseInt(parts[2].trim());
+        seconds = hours * SECONDS_IN_HOUR + minutes * SECONDS_IN_MINUTE + secs;
+      } else {
+        seconds = Integer.parseInt(duration.trim());
+      }
+      return seconds;
+    } catch (Exception e) {
+      return null;
+    }
   }
 }

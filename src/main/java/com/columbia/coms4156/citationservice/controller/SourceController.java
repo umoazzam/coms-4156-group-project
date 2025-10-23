@@ -1,5 +1,7 @@
 package com.columbia.coms4156.citationservice.controller;
 
+import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
+import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.model.Article;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -308,6 +311,29 @@ public class SourceController {
         sourceService.deleteArticle(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
       }
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Batch endpoint: accepts multiple sources and optional submissionId
+  /**
+   * Add or append multiple sources to the database.
+   *
+   * @param request The bulk source request containing multiple sources to add
+   * @param submissionId Optional submission ID for tracking
+   * @return ResponseEntity containing the batch response with HTTP 200 status if successful,
+   *         or HTTP 500 if an error occurs
+   */
+  @PostMapping("/sources")
+  public ResponseEntity<SourceBatchResponse> addSources(
+      @RequestBody BulkSourceRequest request,
+      @RequestParam(value = "submissionId", required = false) Long submissionId) {
+    try {
+      SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+      return new ResponseEntity<>(resp, HttpStatus.OK);
+    } catch (IllegalArgumentException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

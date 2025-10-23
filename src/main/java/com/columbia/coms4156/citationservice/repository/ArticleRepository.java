@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
@@ -23,4 +24,13 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
      * @return a list of articles whose titles contain the specified text
      */
     List<Article> findByTitleContainingIgnoreCase(String title);
+
+    /**
+     * Finds an article by title and author, case-insensitively.
+     *
+     * @param title  the title of the article
+     * @param author the author of the article
+     * @return an Optional containing the found article, or empty if no article was found
+     */
+    Optional<Article> findByTitleIgnoreCaseAndAuthorIgnoreCase(String title, String author);
 }
