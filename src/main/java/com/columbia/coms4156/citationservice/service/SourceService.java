@@ -3,13 +3,18 @@ package com.columbia.coms4156.citationservice.service;
 import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
-import com.columbia.coms4156.citationservice.model.*;
-import com.columbia.coms4156.citationservice.repository.BookRepository;
-import com.columbia.coms4156.citationservice.repository.VideoRepository;
+import com.columbia.coms4156.citationservice.model.Article;
+import com.columbia.coms4156.citationservice.model.Book;
+import com.columbia.coms4156.citationservice.model.Citation;
+import com.columbia.coms4156.citationservice.model.Submission;
+import com.columbia.coms4156.citationservice.model.User;
+import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.repository.ArticleRepository;
-import com.columbia.coms4156.citationservice.repository.SubmissionRepository;
+import com.columbia.coms4156.citationservice.repository.BookRepository;
 import com.columbia.coms4156.citationservice.repository.CitationRepository;
+import com.columbia.coms4156.citationservice.repository.SubmissionRepository;
 import com.columbia.coms4156.citationservice.repository.UserRepository;
+import com.columbia.coms4156.citationservice.repository.VideoRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,10 +51,15 @@ public class SourceService {
   @Autowired
   private ArticleRepository articleRepository;
 
-  // repositories needed for batch operation
+  /**
+   * Repository for managing Submission entities used in batch operations.
+   */
   @Autowired
   private SubmissionRepository submissionRepository;
 
+  /**
+   * Repository for managing Citation link records.
+   */
   @Autowired
   private CitationRepository citationRepository;
 
@@ -59,16 +69,22 @@ public class SourceService {
   @Autowired
   private UserRepository userRepository;
 
-  /**
-   * ObjectMapper for JSON processing.
-   */
+  /** ObjectMapper for JSON processing. */
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  // Constants for time conversions
+  /** Number of seconds in a minute. */
   private static final int SECONDS_IN_MINUTE = 60;
+
+  /** Number of seconds in an hour. */
   private static final int SECONDS_IN_HOUR = 3600;
 
-  // Constant for batch size
+  /** Constant: number of parts when duration contains hours (hh:mm:ss). */
+  private static final int DURATION_PARTS_WITH_HOURS = 3;
+
+  /** Constant: number of parts when duration contains minutes (mm:ss). */
+  private static final int DURATION_PARTS_WITH_MINUTES = 2;
+
+  /** Default batch size for bulk operations. */
   private static final int DEFAULT_BATCH_SIZE = 3;
 
   // --- Book Methods ---
@@ -257,14 +273,20 @@ public class SourceService {
   }
 
   /**
-   * Processes a batch of sources: creates a submission group (if submissionId is null) or
-   * appends to existing submission, de-duplicates media by title+author (case-insensitive),
-   * persists media as needed, and creates Citation records linking media to the submission.
-   * Returns submitted submissionId and list of saved citation ids (as strings).
+   * Processes a batch of sources: creates a submission group (if submissionId is null)
+   * or appends to existing submission, de-duplicates media by title+author
+   * (case-insensitive), persists media as needed, and creates Citation records
+   * linking media to the submission.
+   *
+   * @param request the bulk request containing user and sources to process
+   * @param submissionId the optional existing submission id to append to
+   * @return a SourceBatchResponse containing the submission id and saved citation ids
    */
   @Transactional
   public SourceBatchResponse addOrAppendSources(BulkSourceRequest request, Long submissionId) {
-    if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
+    if (request == null
+        || request.getSources() == null
+        || request.getSources().isEmpty()) {
       return new SourceBatchResponse(submissionId, new ArrayList<>());
     }
 
@@ -283,23 +305,31 @@ public class SourceService {
       }
       submission = submissionRepository.save(submission);
     } else {
+      final String msg = "submissionId not found: " + submissionId;
       submission = submissionRepository.findById(submissionId)
-              .orElseThrow(() -> new IllegalArgumentException("submissionId not found: " + submissionId));
+          .orElseThrow(() -> new IllegalArgumentException(msg));
     }
 
     List<String> savedCitationIds = new ArrayList<>();
 
     for (SourceDTO src : request.getSources()) {
-      String type = src.getMediaType() == null ? "" : src.getMediaType().trim().toLowerCase();
-      String title = src.getTitle() == null ? "" : src.getTitle().trim();
-      String author = src.getAuthor() == null ? "" : src.getAuthor().trim();
+      String rawType = src.getMediaType();
+      String type = rawType == null ? "" : rawType.trim().toLowerCase();
+      String rawTitle = src.getTitle();
+      String title = rawTitle == null ? "" : rawTitle.trim();
+      String rawAuthor = src.getAuthor();
+      String author = rawAuthor == null ? "" : rawAuthor.trim();
 
       Long mediaId = null;
 
       switch (type) {
         case "book":
           // try find by title+author
-          Optional<Book> bOpt = bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+          Optional<Book> bOpt = bookRepository
+              .findByTitleIgnoreCaseAndAuthorIgnoreCase(
+                  title,
+                  author
+              );
           Book book;
           if (bOpt.isPresent()) {
             book = bOpt.get();
@@ -318,7 +348,11 @@ public class SourceService {
           break;
 
         case "article":
-          Optional<Article> aOpt = articleRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+          Optional<Article> aOpt = articleRepository
+              .findByTitleIgnoreCaseAndAuthorIgnoreCase(
+                  title,
+                  author
+              );
           Article article;
           if (aOpt.isPresent()) {
             article = aOpt.get();
@@ -334,7 +368,11 @@ public class SourceService {
           break;
 
         case "video":
-          Optional<Video> vOpt = videoRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+          Optional<Video> vOpt = videoRepository
+              .findByTitleIgnoreCaseAndAuthorIgnoreCase(
+                  title,
+                  author
+              );
           Video video;
           if (vOpt.isPresent()) {
             video = vOpt.get();
@@ -371,7 +409,11 @@ public class SourceService {
 
       // avoid duplicate citation for same submission+media+type
       Optional<Citation> existingCitation = citationRepository
-          .findBySubmissionIdAndMediaIdAndMediaType(submission.getId(), mediaId, type);
+          .findBySubmissionIdAndMediaIdAndMediaType(
+              submission.getId(),
+              mediaId,
+              type
+          );
       if (existingCitation.isPresent()) {
         savedCitationIds.add(existingCitation.get().getId().toString());
       } else {
@@ -394,11 +436,11 @@ public class SourceService {
     try {
       String[] parts = duration.split(":");
       int seconds = 0;
-      if (parts.length == 2) {
+      if (parts.length == DURATION_PARTS_WITH_MINUTES) {
         int minutes = Integer.parseInt(parts[0].trim());
         int secs = Integer.parseInt(parts[1].trim());
         seconds = minutes * SECONDS_IN_MINUTE + secs;
-      } else if (parts.length == 3) {
+      } else if (parts.length == DURATION_PARTS_WITH_HOURS) {
         int hours = Integer.parseInt(parts[0].trim());
         int minutes = Integer.parseInt(parts[1].trim());
         int secs = Integer.parseInt(parts[2].trim());

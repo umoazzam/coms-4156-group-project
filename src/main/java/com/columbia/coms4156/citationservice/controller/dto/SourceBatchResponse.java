@@ -17,17 +17,17 @@ public class SourceBatchResponse {
     /**
      * Default constructor for SourceBatchResponse.
      */
-    public SourceBatchResponse() {}
+    public SourceBatchResponse() { }
 
     /**
      * Constructs a SourceBatchResponse with the given submission ID and source IDs.
      *
-     * @param submissionId the ID of the submission
-     * @param sourceIds the list of source IDs
+     * @param submissionIdParam the ID of the submission
+     * @param sourceIdsParam the list of source IDs
      */
-    public SourceBatchResponse(Long submissionId, List<String> sourceIds) {
-        this.submissionId = submissionId;
-        this.sourceIds = sourceIds;
+    public SourceBatchResponse(Long submissionIdParam, List<String> sourceIdsParam) {
+        this.submissionId = submissionIdParam;
+        this.sourceIds = sourceIdsParam;
     }
 
     /**
@@ -42,10 +42,10 @@ public class SourceBatchResponse {
     /**
      * Sets the submission ID.
      *
-     * @param submissionId the submission ID to set
+     * @param submissionIdParam the submission ID to set
      */
-    public void setSubmissionId(Long submissionId) {
-        this.submissionId = submissionId;
+    public void setSubmissionId(Long submissionIdParam) {
+        this.submissionId = submissionIdParam;
     }
 
     /**
@@ -60,9 +60,9 @@ public class SourceBatchResponse {
     /**
      * Sets the list of source IDs.
      *
-     * @param sourceIds the list of source IDs to set
+     * @param sourceIdsParam the list of source IDs to set
      */
-    public void setSourceIds(List<String> sourceIds) {
-        this.sourceIds = sourceIds;
+    public void setSourceIds(List<String> sourceIdsParam) {
+        this.sourceIds = sourceIdsParam;
     }
 }

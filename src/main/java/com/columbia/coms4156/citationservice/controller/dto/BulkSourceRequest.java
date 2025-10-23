@@ -17,7 +17,7 @@ public class BulkSourceRequest {
     /**
      * Default constructor for BulkSourceRequest.
      */
-    public BulkSourceRequest() {}
+    public BulkSourceRequest() { }
 
     /**
      * Gets the user associated with the request.
@@ -31,10 +31,10 @@ public class BulkSourceRequest {
     /**
      * Sets the user associated with the request.
      *
-     * @param user the user to set
+     * @param userParam the user to set
      */
-    public void setUser(UserDTO user) {
-        this.user = user;
+    public void setUser(UserDTO userParam) {
+        this.user = userParam;
     }
 
     /**
@@ -49,9 +49,9 @@ public class BulkSourceRequest {
     /**
      * Sets the list of sources to be processed.
      *
-     * @param sources the list of sources to set
+     * @param sourcesParam the list of sources to set
      */
-    public void setSources(List<SourceDTO> sources) {
-        this.sources = sources;
+    public void setSources(List<SourceDTO> sourcesParam) {
+        this.sources = sourcesParam;
     }
 }

@@ -45,7 +45,7 @@ public class SourceDTO {
     /**
      * Default constructor for SourceDTO.
      */
-    public SourceDTO() {}
+    public SourceDTO() { }
 
     /**
      * Gets the media type.
@@ -59,10 +59,10 @@ public class SourceDTO {
     /**
      * Sets the media type.
      *
-     * @param mediaType the media type to set
+     * @param mediaTypeParam the media type to set
      */
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
+    public void setMediaType(String mediaTypeParam) {
+        this.mediaType = mediaTypeParam;
     }
 
     /**
@@ -77,10 +77,10 @@ public class SourceDTO {
     /**
      * Sets the title of the source.
      *
-     * @param title the title to set
+     * @param titleParam the title to set
      */
-    public void setTitle(String title) {
-        this.title = title;
+    public void setTitle(String titleParam) {
+        this.title = titleParam;
     }
 
     /**
@@ -95,10 +95,10 @@ public class SourceDTO {
     /**
      * Sets the author of the source.
      *
-     * @param author the author to set
+     * @param authorParam the author to set
      */
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setAuthor(String authorParam) {
+        this.author = authorParam;
     }
 
     /**
@@ -113,10 +113,10 @@ public class SourceDTO {
     /**
      * Sets the ISBN of the source.
      *
-     * @param isbn the ISBN to set
+     * @param isbnParam the ISBN to set
      */
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
+    public void setIsbn(String isbnParam) {
+        this.isbn = isbnParam;
     }
 
     /**
@@ -131,10 +131,10 @@ public class SourceDTO {
     /**
      * Sets the publisher of the source.
      *
-     * @param publisher the publisher to set
+     * @param publisherParam the publisher to set
      */
-    public void setPublisher(String publisher) {
-        this.publisher = publisher;
+    public void setPublisher(String publisherParam) {
+        this.publisher = publisherParam;
     }
 
     /**
@@ -149,10 +149,10 @@ public class SourceDTO {
     /**
      * Sets the year of publication.
      *
-     * @param year the year to set
+     * @param yearParam the year to set
      */
-    public void setYear(Integer year) {
-        this.year = year;
+    public void setYear(Integer yearParam) {
+        this.year = yearParam;
     }
 
     /**
@@ -167,10 +167,10 @@ public class SourceDTO {
     /**
      * Sets the URL of the source.
      *
-     * @param url the URL to set
+     * @param urlParam the URL to set
      */
-    public void setUrl(String url) {
-        this.url = url;
+    public void setUrl(String urlParam) {
+        this.url = urlParam;
     }
 
     /**
@@ -185,10 +185,10 @@ public class SourceDTO {
     /**
      * Sets the access date for the source.
      *
-     * @param accessDate the access date to set
+     * @param accessDateParam the access date to set
      */
-    public void setAccessDate(String accessDate) {
-        this.accessDate = accessDate;
+    public void setAccessDate(String accessDateParam) {
+        this.accessDate = accessDateParam;
     }
 
     /**
@@ -203,10 +203,10 @@ public class SourceDTO {
     /**
      * Sets the platform where the source is hosted.
      *
-     * @param platform the platform to set
+     * @param platformParam the platform to set
      */
-    public void setPlatform(String platform) {
-        this.platform = platform;
+    public void setPlatform(String platformParam) {
+        this.platform = platformParam;
     }
 
     /**
@@ -221,10 +221,10 @@ public class SourceDTO {
     /**
      * Sets the duration of the source.
      *
-     * @param duration the duration to set
+     * @param durationParam the duration to set
      */
-    public void setDuration(String duration) {
-        this.duration = duration;
+    public void setDuration(String durationParam) {
+        this.duration = durationParam;
     }
 
     /**
@@ -239,10 +239,10 @@ public class SourceDTO {
     /**
      * Sets the channel associated with the source.
      *
-     * @param channel the channel to set
+     * @param channelParam the channel to set
      */
-    public void setChannel(String channel) {
-        this.channel = channel;
+    public void setChannel(String channelParam) {
+        this.channel = channelParam;
     }
 
     /**
@@ -257,9 +257,9 @@ public class SourceDTO {
     /**
      * Sets the director of the source.
      *
-     * @param director the director to set
+     * @param directorParam the director to set
      */
-    public void setDirector(String director) {
-        this.director = director;
+    public void setDirector(String directorParam) {
+        this.director = directorParam;
     }
 }

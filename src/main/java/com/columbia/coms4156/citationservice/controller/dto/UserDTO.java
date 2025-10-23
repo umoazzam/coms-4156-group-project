@@ -12,7 +12,7 @@ public class UserDTO {
     /**
      * Default constructor for UserDTO.
      */
-    public UserDTO() {}
+    public UserDTO() { }
 
     /**
      * Gets the username.
@@ -26,9 +26,9 @@ public class UserDTO {
     /**
      * Sets the username.
      *
-     * @param username the username to set
+     * @param usernameParam the username to set
      */
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUsername(String usernameParam) {
+        this.username = usernameParam;
     }
 }
