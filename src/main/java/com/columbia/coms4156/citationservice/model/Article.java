@@ -9,6 +9,16 @@ import jakarta.persistence.Table;
 public class Article extends Source {
 
     /**
+     * Minimum valid publication year.
+     */
+    private static final int MIN_PUBLICATION_YEAR = 1000;
+
+    /**
+     * Number of years into the future allowed for publication dates.
+     */
+    private static final int FUTURE_YEAR_BUFFER = 10;
+
+    /**
      * The journal where the article was published.
      */
     @Column
@@ -80,8 +90,12 @@ public class Article extends Source {
      * Sets the journal name.
      *
      * @param journalParam the journal name to set
+     * @throws IllegalArgumentException if journalParam is null or blank
      */
     public void setJournal(String journalParam) {
+        if (journalParam != null && journalParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Journal name cannot be blank");
+        }
         this.journal = journalParam;
     }
 
@@ -98,8 +112,12 @@ public class Article extends Source {
      * Sets the volume number.
      *
      * @param volumeParam the volume number to set
+     * @throws IllegalArgumentException if volumeParam is null or blank
      */
     public void setVolume(String volumeParam) {
+        if (volumeParam != null && volumeParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Volume number cannot be blank");
+        }
         this.volume = volumeParam;
     }
 
@@ -116,8 +134,12 @@ public class Article extends Source {
      * Sets the issue number.
      *
      * @param issueParam the issue number to set
+     * @throws IllegalArgumentException if issueParam is null or blank
      */
     public void setIssue(String issueParam) {
+        if (issueParam != null && issueParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Issue number cannot be blank");
+        }
         this.issue = issueParam;
     }
 
@@ -134,8 +156,12 @@ public class Article extends Source {
      * Sets the page numbers.
      *
      * @param pagesParam the page numbers to set
+     * @throws IllegalArgumentException if pagesParam is null or blank
      */
     public void setPages(String pagesParam) {
+        if (pagesParam != null && pagesParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Page numbers cannot be blank");
+        }
         this.pages = pagesParam;
     }
 
@@ -152,9 +178,32 @@ public class Article extends Source {
      * Sets the DOI.
      *
      * @param doiParam the DOI to set
+     * @throws IllegalArgumentException if doiParam is blank or doesn't follow DOI format
      */
     public void setDoi(String doiParam) {
+        if (doiParam != null && doiParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("DOI cannot be blank");
+        }
+        if (doiParam != null && !isValidDoi(doiParam)) {
+            throw new IllegalArgumentException(
+                "DOI must follow standard format (e.g., 10.1000/123456)");
+        }
         this.doi = doiParam;
+    }
+
+    /**
+     * Validates DOI format.
+     * DOI format: starts with "10." followed by a registrant code and a suffix
+     *
+     * @param doiValue the DOI to validate
+     * @return true if valid DOI format, false otherwise
+     */
+    private boolean isValidDoi(String doiValue) {
+        if (doiValue == null || doiValue.trim().isEmpty()) {
+            return false;
+        }
+        // DOI pattern: 10. followed by registrant code (digits) / suffix
+        return doiValue.matches("^10\\.[0-9]{4,}/[\\S]+$");
     }
 
     /**
@@ -170,9 +219,31 @@ public class Article extends Source {
      * Sets the URL.
      *
      * @param urlParam the URL to set
+     * @throws IllegalArgumentException if urlParam is blank or doesn't follow URL format
      */
     public void setUrl(String urlParam) {
+        if (urlParam != null && urlParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("URL cannot be blank");
+        }
+        if (urlParam != null && !isValidUrl(urlParam)) {
+            throw new IllegalArgumentException("URL must be a valid HTTP or HTTPS URL");
+        }
         this.url = urlParam;
+    }
+
+    /**
+     * Validates URL format.
+     * Accepts HTTP and HTTPS URLs
+     *
+     * @param urlValue the URL to validate
+     * @return true if valid URL format, false otherwise
+     */
+    private boolean isValidUrl(String urlValue) {
+        if (urlValue == null || urlValue.trim().isEmpty()) {
+            return false;
+        }
+        // URL pattern: starts with http:// or https:// followed by valid characters
+        return urlValue.matches("^https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+$");
     }
 
     /**
@@ -188,9 +259,38 @@ public class Article extends Source {
      * Sets the publication year.
      *
      * @param publicationYearParam the publication year to set
+     * @throws IllegalArgumentException if publicationYearParam is negative or unreasonable
      */
     public void setPublicationYear(Integer publicationYearParam) {
+        if (publicationYearParam != null && !isValidPublicationYear(publicationYearParam)) {
+            throw new IllegalArgumentException("Publication year must be between "
+                + MIN_PUBLICATION_YEAR + " and " + (getCurrentYear() + FUTURE_YEAR_BUFFER));
+        }
         this.publicationYear = publicationYearParam;
+    }
+
+    /**
+     * Validates publication year.
+     * Must be between 1000 and current year + 10 (to allow for future publications)
+     *
+     * @param year the year to validate
+     * @return true if valid publication year, false otherwise
+     */
+    private boolean isValidPublicationYear(Integer year) {
+        if (year == null) {
+            return true; // null is allowed
+        }
+        int currentYear = getCurrentYear();
+        return year >= MIN_PUBLICATION_YEAR && year <= (currentYear + FUTURE_YEAR_BUFFER);
+    }
+
+    /**
+     * Gets the current year for validation purposes.
+     *
+     * @return the current year
+     */
+    private int getCurrentYear() {
+        return java.time.Year.now().getValue();
     }
 
     @Override

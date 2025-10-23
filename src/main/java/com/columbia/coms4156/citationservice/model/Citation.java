@@ -89,8 +89,12 @@ public class Citation {
      * Sets the citation ID.
      *
      * @param idParam the citation ID to set
+     * @throws IllegalArgumentException if idParam is negative
      */
     public void setId(Long idParam) {
+        if (idParam != null && idParam < 0) {
+            throw new IllegalArgumentException("ID cannot be negative");
+        }
         this.id = idParam;
     }
 
@@ -106,7 +110,7 @@ public class Citation {
     /**
      * Sets the submission containing this citation.
      *
-     * @param submissionParam the submission to set
+     * @param submissionParam the submission to set (can be null to clear the relationship)
      */
     public void setSubmission(Submission submissionParam) {
         this.submission = submissionParam;
@@ -125,8 +129,12 @@ public class Citation {
      * Sets the user input metadata.
      *
      * @param userInputMetaDataParam the user input metadata to set
+     * @throws IllegalArgumentException if userInputMetaDataParam is blank
      */
     public void setUserInputMetaData(String userInputMetaDataParam) {
+        if (userInputMetaDataParam != null && userInputMetaDataParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("User input metadata cannot be blank");
+        }
         this.userInputMetaData = userInputMetaDataParam;
     }
 
@@ -143,8 +151,12 @@ public class Citation {
      * Sets the media ID.
      *
      * @param mediaIdParam the media ID to set
+     * @throws IllegalArgumentException if mediaIdParam is negative
      */
     public void setMediaId(Long mediaIdParam) {
+        if (mediaIdParam != null && mediaIdParam < 0) {
+            throw new IllegalArgumentException("Media ID cannot be negative");
+        }
         this.mediaId = mediaIdParam;
     }
 
@@ -161,8 +173,12 @@ public class Citation {
      * Sets the media type.
      *
      * @param mediaTypeParam the media type to set
+     * @throws IllegalArgumentException if mediaTypeParam is blank
      */
     public void setMediaType(String mediaTypeParam) {
+        if (mediaTypeParam != null && mediaTypeParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Media type cannot be blank");
+        }
         this.mediaType = mediaTypeParam;
     }
 
