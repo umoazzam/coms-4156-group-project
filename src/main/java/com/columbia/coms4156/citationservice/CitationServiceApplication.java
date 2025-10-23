@@ -27,12 +27,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class CitationServiceApplication {
 
-    /**
-     * Private constructor to prevent instantiation of utility class.
-     */
-    private CitationServiceApplication() {
-        // Utility class - prevent instantiation
-    }
 
     /**
      * Main method to start the Spring Boot Citation Service application.

@@ -46,10 +46,11 @@ public abstract class Source {
      *
      * @param titleParam the title of the source
      * @param authorParam the author of the source
+     * @throws IllegalArgumentException if titleParam or authorParam is null or blank
      */
     public Source(String titleParam, String authorParam) {
-        this.title = titleParam;
-        this.author = authorParam;
+        setTitle(titleParam);
+        setAuthor(authorParam);
     }
 
     /**
@@ -65,8 +66,12 @@ public abstract class Source {
      * Sets the source ID.
      *
      * @param idParam the source ID to set
+     * @throws IllegalArgumentException if idParam is negative
      */
     public void setId(Long idParam) {
+        if (idParam != null && idParam < 0) {
+            throw new IllegalArgumentException("ID cannot be negative");
+        }
         this.id = idParam;
     }
 
@@ -83,8 +88,15 @@ public abstract class Source {
      * Sets the title.
      *
      * @param titleParam the title to set
+     * @throws IllegalArgumentException if titleParam is null or blank
      */
     public void setTitle(String titleParam) {
+        if (titleParam == null) {
+            throw new IllegalArgumentException("Title cannot be null");
+        }
+        if (titleParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Title cannot be blank");
+        }
         this.title = titleParam;
     }
 
@@ -101,8 +113,15 @@ public abstract class Source {
      * Sets the author.
      *
      * @param authorParam the author to set
+     * @throws IllegalArgumentException if authorParam is null or blank
      */
     public void setAuthor(String authorParam) {
+        if (authorParam == null) {
+            throw new IllegalArgumentException("Author cannot be null");
+        }
+        if (authorParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Author cannot be blank");
+        }
         this.author = authorParam;
     }
 

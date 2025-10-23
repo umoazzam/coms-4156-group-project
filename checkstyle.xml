@@ -118,7 +118,8 @@
     <!-- <module name="DesignForExtension"/> -->
     <!-- DISABLED: FinalClass rule to avoid forcing classes to be final -->
     <!-- <module name="FinalClass"/> -->
-    <module name="HideUtilityClassConstructor"/>
+    <!-- DISABLED: HideUtilityClassConstructor rule to avoid issues with Spring Boot application classes -->
+    <!-- <module name="HideUtilityClassConstructor"/> -->
     <module name="InterfaceIsType"/>
     <module name="VisibilityModifier"/>
 
