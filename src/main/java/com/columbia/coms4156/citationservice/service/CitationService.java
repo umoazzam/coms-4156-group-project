@@ -294,7 +294,7 @@ public class CitationService {
      * @return the formatted citation string
      * @throws IllegalArgumentException if citation style or source type is unsupported
      */
-    private String generateCitationByStyle(Object source, String style) {
+    public String generateCitationByStyle(Object source, String style) {
         switch (style.toUpperCase()) {
             case "MLA":
                 if (source instanceof Book) {
