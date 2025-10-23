@@ -30,7 +30,7 @@ public class CitationServiceApplication {
     /**
      * Private constructor to prevent instantiation of utility class.
      */
-    private CitationServiceApplication() {
+    public CitationServiceApplication() {
         // Utility class - prevent instantiation
     }
 

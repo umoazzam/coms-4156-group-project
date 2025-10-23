@@ -170,18 +170,31 @@ public class CitationService {
      * @return the formatted author name (Last, First)
      * @throws IllegalArgumentException if author is null or empty
      */
-    private String formatAuthorName(String author) {
+    public String formatAuthorName(String author) {
         if (author == null || author.trim().isEmpty()) {
             throw new IllegalArgumentException("Author name cannot be null or empty");
         }
 
-        String[] parts = author.trim().split("\\s+");
-        if (parts.length >= 2) {
-            String firstName = parts[0];
-            String lastName = parts[parts.length - 1];
-            return lastName + ", " + firstName;
+        String[] authors = author.split(",");
+        StringBuilder formattedAuthors = new StringBuilder();
+
+        for (int i = 0; i < authors.length; i++) {
+            String authorName = authors[i].trim();
+            String[] parts = authorName.split("\\s+");
+            if (parts.length >= 2) {
+                String firstName = parts[0];
+                String lastName = parts[parts.length - 1];
+                formattedAuthors.append(lastName).append(", ").append(firstName);
+            } else {
+                formattedAuthors.append(authorName);
+            }
+
+            if (i < authors.length - 1) {
+                formattedAuthors.append(" and ");
+            }
         }
-        return author;
+
+        return formattedAuthors.toString();
     }
 
     /**
@@ -546,17 +559,33 @@ public class CitationService {
      * @return the formatted author name in APA style (Last, F.)
      * @throws IllegalArgumentException if author is null or empty
      */
-    private String formatAPAAuthorName(String author) {
+    public String formatAPAAuthorName(String author) {
         if (author == null || author.trim().isEmpty()) {
             throw new IllegalArgumentException("Author name cannot be null or empty");
         }
 
-        String[] parts = author.trim().split("\\s+");
-        if (parts.length >= 2) {
-            String firstName = parts[0];
-            String lastName = parts[parts.length - 1];
-            return lastName + ", " + firstName.charAt(0) + ".";
+        String[] authors = author.split(",");
+        StringBuilder formattedAuthors = new StringBuilder();
+
+        for (int i = 0; i < authors.length; i++) {
+            String authorName = authors[i].trim();
+            String[] parts = authorName.split("\\s+");
+            if (parts.length >= 2) {
+                String firstName = parts[0];
+                String lastName = parts[parts.length - 1];
+                formattedAuthors.append(lastName).append(", ")
+                        .append(firstName.charAt(0)).append(".");
+            } else {
+                formattedAuthors.append(authorName);
+            }
+
+            if (i < authors.length - 2) {
+                formattedAuthors.append(", ");
+            } else if (i == authors.length - 2) {
+                formattedAuthors.append(" & ");
+            }
         }
-        return author;
+
+        return formattedAuthors.toString();
     }
 }
