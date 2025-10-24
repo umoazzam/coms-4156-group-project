@@ -1,5 +1,7 @@
 package com.columbia.coms4156.citationservice.controller;
 
+import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
+import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.model.Article;
@@ -15,10 +17,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * REST Controller for Source management API endpoints.
@@ -311,6 +316,46 @@ public class SourceController {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Batch endpoint: accepts multiple sources and optional submissionId
+  /**
+   * Add or append multiple sources to the database.
+   *
+   * @param request The bulk source request containing multiple sources to add
+   * @param submissionId Optional submission ID for tracking
+   * @return ResponseEntity containing the batch response with HTTP 200 status if successful,
+   *         or HTTP 500 if an error occurs
+   */
+  @PostMapping("/sources")
+  public ResponseEntity<SourceBatchResponse> addSources(
+      @RequestBody BulkSourceRequest request,
+      @RequestParam(value = "submissionId", required = false) Long submissionId) {
+    try {
+      // return 400 Bad Request when the request has no sources
+      if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
+        SourceBatchResponse resp = new SourceBatchResponse();
+        resp.setSubmissionId(submissionId);
+        resp.setSourceIds(new ArrayList<>());
+        resp.setErrors(Arrays.asList("No sources provided in request"));
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+      }
+      SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+      return new ResponseEntity<>(resp, HttpStatus.OK);
+    } catch (IllegalArgumentException e) {
+      SourceBatchResponse resp = new SourceBatchResponse();
+      resp.setSubmissionId(submissionId);
+      resp.setSourceIds(new ArrayList<>());
+      resp.setErrors(Arrays.asList(e.getMessage() == null ? "Resource not found" : e.getMessage()));
+      return new ResponseEntity<>(resp, HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      SourceBatchResponse resp = new SourceBatchResponse();
+      resp.setSubmissionId(submissionId);
+      resp.setSourceIds(new ArrayList<>());
+      resp.setErrors(Arrays.asList("Internal server error: " + (e.getMessage() == null
+              ? "unexpected error" : e.getMessage())));
+      return new ResponseEntity<>(resp, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
