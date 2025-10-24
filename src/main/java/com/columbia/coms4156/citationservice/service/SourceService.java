@@ -342,8 +342,8 @@ public class SourceService {
             book.setIsbn(src.getIsbn());
             book.setPublisher(src.getPublisher());
             book.setPublicationYear(src.getYear());
-            book.setCity(null);
-            book.setEdition(null);
+            book.setCity(src.getCity());
+            book.setEdition(src.getEdition());
             book = bookRepository.save(book);
           }
           mediaId = book.getId();

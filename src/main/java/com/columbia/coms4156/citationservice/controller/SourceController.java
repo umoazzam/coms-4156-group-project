@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * REST Controller for Source management API endpoints.
@@ -331,12 +333,29 @@ public class SourceController {
       @RequestBody BulkSourceRequest request,
       @RequestParam(value = "submissionId", required = false) Long submissionId) {
     try {
+      // return 400 Bad Request when the request has no sources
+      if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
+        SourceBatchResponse resp = new SourceBatchResponse();
+        resp.setSubmissionId(submissionId);
+        resp.setSourceIds(new ArrayList<>());
+        resp.setErrors(Arrays.asList("No sources provided in request"));
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+      }
       SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
       return new ResponseEntity<>(resp, HttpStatus.OK);
     } catch (IllegalArgumentException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      SourceBatchResponse resp = new SourceBatchResponse();
+      resp.setSubmissionId(submissionId);
+      resp.setSourceIds(new ArrayList<>());
+      resp.setErrors(Arrays.asList(e.getMessage() == null ? "Resource not found" : e.getMessage()));
+      return new ResponseEntity<>(resp, HttpStatus.NOT_FOUND);
     } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      SourceBatchResponse resp = new SourceBatchResponse();
+      resp.setSubmissionId(submissionId);
+      resp.setSourceIds(new ArrayList<>());
+      resp.setErrors(Arrays.asList("Internal server error: " + (e.getMessage() == null
+              ? "unexpected error" : e.getMessage())));
+      return new ResponseEntity<>(resp, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

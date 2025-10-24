@@ -42,6 +42,13 @@ public class SourceDTO {
     /** The director of the source, if applicable. */
     private String director;
 
+    /** The city of the source, if applicable. */
+    private String city;
+
+    /** The director of the source, if applicable. */
+    private String edition;
+
+
     /**
      * Default constructor for SourceDTO.
      */
@@ -84,6 +91,24 @@ public class SourceDTO {
     }
 
     /**
+    * Sets the title of the source.
+    *
+    * @param cityParam the title to set
+    */
+    public void setCity(String cityParam) {
+        this.city = cityParam;
+    }
+
+    /**
+    * Sets the title of the source.
+    *
+    * @param editionParam the title to set
+    */
+    public void setEdition(String editionParam) {
+        this.edition = editionParam;
+    }
+
+  /**
      * Gets the author of the source.
      *
      * @return the author
@@ -93,6 +118,24 @@ public class SourceDTO {
     }
 
     /**
+    * Gets the edition of the source.
+    *
+    * @return the author
+    */
+    public String getEdition() {
+      return edition;
+    }
+
+    /**
+    * Gets the city of the source.
+    *
+    * @return the author
+    */
+    public String getCity() {
+      return city;
+    }
+
+  /**
      * Sets the author of the source.
      *
      * @param authorParam the author to set
