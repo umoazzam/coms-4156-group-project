@@ -71,13 +71,16 @@ public class CitationController {
    *
    * @param book The book object to generate a citation for. This is an Ad-Hoc creation and the
    *             book will not be saved.
+   * @param style The citation style (MLA, APA, Chicago)
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if book not found, or HTTP 500 if an error occurs
    */
   @PostMapping("/book")
-  public ResponseEntity<String> generateBookCitationFromData(@Valid @RequestBody Book book) {
+  public ResponseEntity<String> generateBookCitationFromData(
+      @Valid @RequestBody Book book,
+      @RequestParam(defaultValue = "MLA") String style) {
     try {
-      String citation = citationService.generateMLACitation(book);
+      String citation = citationService.generateCitationByStyle(book, style);
       return new ResponseEntity<>(citation, HttpStatus.OK);
     } catch (Exception e) {
       return new ResponseEntity<>("Error generating citation", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -111,13 +114,16 @@ public class CitationController {
    *
    * @param video The video object to generate a citation for. This is an Ad-Hoc creation and the
    *             video will not be saved.
+   * @param style The citation style (MLA, APA, Chicago)
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if video not found, or HTTP 500 if an error occurs
    */
   @PostMapping("/video/citation")
-  public ResponseEntity<String> generateVideoCitationFromData(@Valid @RequestBody Video video) {
+  public ResponseEntity<String> generateVideoCitationFromData(
+      @Valid @RequestBody Video video,
+      @RequestParam(defaultValue = "MLA") String style) {
     try {
-      String citation = citationService.generateMLACitation(video);
+      String citation = citationService.generateCitationByStyle(video, style);
       return new ResponseEntity<>(citation, HttpStatus.OK);
     } catch (Exception e) {
       return new ResponseEntity<>("Error generating citation", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -151,14 +157,16 @@ public class CitationController {
    *
    * @param article The article object to generate a citation for. This is an Ad-Hoc creation
    *                and the article will not be saved.
+   * @param style The citation style (MLA, APA, Chicago)
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if article not found, or HTTP 500 if an error occurs
    */
   @PostMapping("/article/citation")
   public ResponseEntity<String> generateArticleCitationFromData(
-      @Valid @RequestBody Article article) {
+      @Valid @RequestBody Article article,
+      @RequestParam(defaultValue = "MLA") String style) {
     try {
-      String citation = citationService.generateMLACitation(article);
+      String citation = citationService.generateCitationByStyle(article, style);
       return new ResponseEntity<>(citation, HttpStatus.OK);
     } catch (Exception e) {
       return new ResponseEntity<>("Error generating citation", HttpStatus.INTERNAL_SERVER_ERROR);

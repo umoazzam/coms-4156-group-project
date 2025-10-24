@@ -26,6 +26,26 @@ import java.util.List;
 public class Submission {
 
     /**
+     * MLA citation format constant.
+     */
+    private static final String FORMAT_MLA = "MLA";
+
+    /**
+     * APA citation format constant.
+     */
+    private static final String FORMAT_APA = "APA";
+
+    /**
+     * Chicago citation format constant.
+     */
+    private static final String FORMAT_CHICAGO = "Chicago";
+
+    /**
+     * Array of all valid citation formats.
+     */
+    private static final String[] VALID_FORMATS = {FORMAT_MLA, FORMAT_APA, FORMAT_CHICAGO};
+
+    /**
      * The unique identifier for the submission.
      */
     @Id
@@ -106,9 +126,9 @@ public class Submission {
     }
 
     /**
-     * Sets the user who created the submission.
+     * Sets the user who owns this submission.
      *
-     * @param userParam the user to set
+     * @param userParam the user to set (can be null to clear the relationship)
      */
     public void setUser(User userParam) {
         this.user = userParam;
@@ -127,8 +147,15 @@ public class Submission {
      * Sets the submission date.
      *
      * @param dateParam the submission date to set
+     * @throws IllegalArgumentException if dateParam is null or in the future
      */
     public void setDate(LocalDateTime dateParam) {
+        if (dateParam == null) {
+            throw new IllegalArgumentException("Date cannot be null");
+        }
+        if (dateParam.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Date cannot be in the future");
+        }
         this.date = dateParam;
     }
 
@@ -145,8 +172,18 @@ public class Submission {
      * Sets the citation format.
      *
      * @param formatParam the citation format to set
+     * @throws IllegalArgumentException if formatParam is null, blank, or not a valid format
      */
     public void setFormat(String formatParam) {
+        if (formatParam == null) {
+            throw new IllegalArgumentException("Format cannot be null");
+        }
+        if (formatParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Format cannot be blank");
+        }
+        if (!isValidFormat(formatParam)) {
+            throw new IllegalArgumentException("Format must be one of: MLA, APA, Chicago");
+        }
         this.format = formatParam;
     }
 
@@ -163,8 +200,12 @@ public class Submission {
      * Sets the list of citations.
      *
      * @param citationsParam the list of citations to set
+     * @throws IllegalArgumentException if citationsParam is null
      */
     public void setCitations(List<Citation> citationsParam) {
+        if (citationsParam == null) {
+            throw new IllegalArgumentException("Citations list cannot be null");
+        }
         this.citations = citationsParam;
     }
 
@@ -172,20 +213,34 @@ public class Submission {
      * Adds a citation to this submission.
      *
      * @param citation the citation to add
+     * @throws IllegalArgumentException if citation is null or already belongs to another submission
      */
     public void addCitation(Citation citation) {
-        citations.add(citation);
-        citation.setSubmission(this);
+        if (citation == null) {
+            throw new IllegalArgumentException("Citation cannot be null");
+        }
+        if (citation.getSubmission() != null && !citation.getSubmission().equals(this)) {
+            throw new IllegalArgumentException("Citation already belongs to another submission");
+        }
+        if (!citations.contains(citation)) {
+            citations.add(citation);
+            citation.setSubmission(this);
+        }
     }
 
     /**
      * Removes a citation from this submission.
      *
      * @param citation the citation to remove
+     * @throws IllegalArgumentException if citation is null
      */
     public void removeCitation(Citation citation) {
-        citations.remove(citation);
-        citation.setSubmission(null);
+        if (citation == null) {
+            throw new IllegalArgumentException("Citation cannot be null");
+        }
+        if (citations.remove(citation)) {
+            citation.setSubmission(null);
+        }
     }
 
     @Override
@@ -197,6 +252,26 @@ public class Submission {
                 + ", format='" + format + '\''
                 + ", citationsCount=" + (citations != null ? citations.size() : 0)
                 + '}';
+    }
+
+    /**
+     * Validates if the provided format is one of the accepted citation formats.
+     *
+     * @param formatValue the format to validate
+     * @return true if the format is valid (MLA, APA, or Chicago), false otherwise
+     */
+    private boolean isValidFormat(String formatValue) {
+        if (formatValue == null || formatValue.trim().isEmpty()) {
+            return false;
+        }
+
+        String trimmedFormat = formatValue.trim();
+        for (String validFormat : VALID_FORMATS) {
+            if (validFormat.equalsIgnoreCase(trimmedFormat)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

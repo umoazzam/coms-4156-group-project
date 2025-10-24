@@ -105,7 +105,7 @@ See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit)
 
 ## API Endpoints
 
-### SourceController (Not for Main Functionality)
+### SourceController
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -239,17 +239,10 @@ These are API tests you can use to exercise the service endpoints (create, retri
 - CORS is enabled for all origins (development setup)
 
 ## Next Steps
-
-This starter code provides:
-- ✅ Class structure for scalable citations: see LINK for details on intended implementation.
-- ✅ Sample REST API endpoints for Source object management and placeholder Citation endpoints
-- ✅ Basic MLA citation generation
-- ✅ PostgreSQL Database Connection
-
-Codebase is ready for: 
-- API endpoint creation & testing (also check the Database to ensure objects are being saved)
-  - This will involve creating new controllers such as UserController and SubmissionController
-  - The SubmissionController will be the main functionality of our application. SourceController is a placeholder. Please see [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design & the Project Proposal document for information on how the main API should be setup.
-- **Backfill functionality**: Currently the `backfill` parameter is accepted but not implemented. This would involve integrating with external APIs to automatically populate missing metadata.
-- User authentication and API endpoint protection
-- Code style checks
+Currently, the service supports basic citation generation and source management. Before the first demo, the team will be refactoring the APIs
+to support a more flexible citation generation mechanism that allows for backfilling missing information with AI, a feature to be added in the second iteration.
+These changes will include:
+- Modifying GET endpoints to utilize both a Citation object and a Source object according to the linked [API design](https://docs.google.com/document/d/1h68plDcqBSd3OXQ8W1byPptmb5XWFZ081d9pRdjwgis/edit?usp=sharing).
+- Fix controller methods associated with these endpoints.
+- Update README to reflect new API usage.
+- Complete AI documentation used for the first iteration.

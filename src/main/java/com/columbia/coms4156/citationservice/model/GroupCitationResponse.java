@@ -49,8 +49,12 @@ public class GroupCitationResponse {
      * Sets the submission ID.
      *
      * @param submissionIdParam the submission ID to set
+     * @throws IllegalArgumentException if submissionIdParam is negative
      */
     public void setSubmissionId(Long submissionIdParam) {
+        if (submissionIdParam != null && submissionIdParam < 0) {
+            throw new IllegalArgumentException("Submission ID cannot be negative");
+        }
         this.submissionId = submissionIdParam;
     }
 
@@ -67,8 +71,12 @@ public class GroupCitationResponse {
      * Sets the citations map.
      *
      * @param citationsParam the citations map to set
+     * @throws IllegalArgumentException if citationsParam is null
      */
     public void setCitations(Map<String, String> citationsParam) {
+        if (citationsParam == null) {
+            throw new IllegalArgumentException("Citations map cannot be null");
+        }
         this.citations = citationsParam;
     }
 

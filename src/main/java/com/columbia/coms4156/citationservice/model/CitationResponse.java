@@ -48,8 +48,12 @@ public class CitationResponse {
      * Sets the citation ID.
      *
      * @param citationIdParam the citation ID to set
+     * @throws IllegalArgumentException if citationIdParam is blank
      */
     public void setCitationId(String citationIdParam) {
+        if (citationIdParam != null && citationIdParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Citation ID cannot be blank");
+        }
         this.citationId = citationIdParam;
     }
 
@@ -66,8 +70,12 @@ public class CitationResponse {
      * Sets the citation string.
      *
      * @param citationStringParam the citation string to set
+     * @throws IllegalArgumentException if citationStringParam is blank
      */
     public void setCitationString(String citationStringParam) {
+        if (citationStringParam != null && citationStringParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Citation string cannot be blank");
+        }
         this.citationString = citationStringParam;
     }
 
