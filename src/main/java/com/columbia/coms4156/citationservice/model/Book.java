@@ -20,6 +20,56 @@ import jakarta.persistence.Table;
 @Table(name = "books")
 public class Book extends Source {
 
+    /**
+     * Minimum valid publication year.
+     */
+    private static final int MIN_PUBLICATION_YEAR = 1000;
+
+    /**
+     * Number of years into the future allowed for publication dates.
+     */
+    private static final int FUTURE_YEAR_BUFFER = 10;
+
+    /**
+     * Length of ISBN-10.
+     */
+    private static final int ISBN_10_LENGTH = 10;
+
+    /**
+     * Length of ISBN-13.
+     */
+    private static final int ISBN_13_LENGTH = 13;
+
+    /**
+     * ISBN-10 checksum modulus.
+     */
+    private static final int ISBN_10_MODULUS = 11;
+
+    /**
+     * ISBN-10 X character value.
+     */
+    private static final int ISBN_10_X_VALUE = 10;
+
+    /**
+     * ISBN-13 multiplier for odd positions.
+     */
+    private static final int ISBN_13_ODD_MULTIPLIER = 3;
+
+    /**
+     * General base 10 value.
+     */
+    private static final int BASE_10 = 10;
+
+    /**
+     * ISBN-10 checksum calculation limit (excludes check digit).
+     */
+    private static final int ISBN_10_CHECKSUM_LIMIT = 9;
+
+    /**
+     * ISBN-13 checksum calculation limit (excludes check digit).
+     */
+    private static final int ISBN_13_CHECKSUM_LIMIT = 12;
+
     // Instance Variables
     /**
      * The publisher of the book.
@@ -89,8 +139,12 @@ public class Book extends Source {
      * Sets the publisher of the book.
      *
      * @param publisherParam The publisher to set (optional field)
+     * @throws IllegalArgumentException if publisherParam is blank
      */
     public void setPublisher(String publisherParam) {
+        if (publisherParam != null && publisherParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Publisher cannot be blank");
+        }
         this.publisher = publisherParam;
     }
 
@@ -107,8 +161,13 @@ public class Book extends Source {
      * Sets the publication year of the book.
      *
      * @param publicationYearParam The publication year to set (optional field)
+     * @throws IllegalArgumentException if publicationYearParam is outside valid range
      */
     public void setPublicationYear(Integer publicationYearParam) {
+        if (publicationYearParam != null && !isValidPublicationYear(publicationYearParam)) {
+            throw new IllegalArgumentException("Publication year must be between "
+                + MIN_PUBLICATION_YEAR + " and " + (getCurrentYear() + FUTURE_YEAR_BUFFER));
+        }
         this.publicationYear = publicationYearParam;
     }
 
@@ -125,8 +184,12 @@ public class Book extends Source {
      * Sets the publication city of the book.
      *
      * @param cityParam The publication city to set (optional field)
+     * @throws IllegalArgumentException if cityParam is blank
      */
     public void setCity(String cityParam) {
+        if (cityParam != null && cityParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("City cannot be blank");
+        }
         this.city = cityParam;
     }
 
@@ -143,8 +206,12 @@ public class Book extends Source {
      * Sets the edition information of the book.
      *
      * @param editionParam The edition to set (optional field)
+     * @throws IllegalArgumentException if editionParam is blank
      */
     public void setEdition(String editionParam) {
+        if (editionParam != null && editionParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Edition cannot be blank");
+        }
         this.edition = editionParam;
     }
 
@@ -161,8 +228,15 @@ public class Book extends Source {
      * Sets the ISBN of the book.
      *
      * @param isbnParam The ISBN to set (optional field)
+     * @throws IllegalArgumentException if isbnParam is blank or invalid format
      */
     public void setIsbn(String isbnParam) {
+        if (isbnParam != null && isbnParam.trim().isEmpty()) {
+            throw new IllegalArgumentException("ISBN cannot be blank");
+        }
+        if (isbnParam != null && !isValidIsbn(isbnParam)) {
+            throw new IllegalArgumentException("ISBN must be a valid ISBN-10 or ISBN-13 format");
+        }
         this.isbn = isbnParam;
     }
 
@@ -184,5 +258,100 @@ public class Book extends Source {
                 + ", edition='" + edition + '\''
                 + ", isbn='" + isbn + '\''
                 + '}';
+    }
+
+    /**
+     * Validates publication year.
+     * Must be between 1000 and current year + 10 (to allow for future publications)
+     *
+     * @param year the year to validate
+     * @return true if valid publication year, false otherwise
+     */
+    private boolean isValidPublicationYear(Integer year) {
+        if (year == null) {
+            return true; // null is allowed
+        }
+        int currentYear = getCurrentYear();
+        return year >= MIN_PUBLICATION_YEAR && year <= (currentYear + FUTURE_YEAR_BUFFER);
+    }
+
+    /**
+     * Gets the current year for validation purposes.
+     *
+     * @return the current year
+     */
+    private int getCurrentYear() {
+        return java.time.Year.now().getValue();
+    }
+
+    /**
+     * Validates ISBN format and checksum.
+     * Supports both ISBN-10 and ISBN-13 formats
+     *
+     * @param isbnValue the ISBN to validate
+     * @return true if valid ISBN format and checksum, false otherwise
+     */
+    private boolean isValidIsbn(String isbnValue) {
+        if (isbnValue == null || isbnValue.trim().isEmpty()) {
+            return false;
+        }
+
+        // Remove hyphens and spaces
+        String cleanIsbn = isbnValue.replaceAll("[\\s\\-]", "");
+
+        if (cleanIsbn.length() == ISBN_10_LENGTH) {
+            return isValidIsbn10(cleanIsbn);
+        } else if (cleanIsbn.length() == ISBN_13_LENGTH) {
+            return isValidIsbn13(cleanIsbn);
+        }
+
+        return false;
+    }
+
+    /**
+     * Validates ISBN-10 format and checksum.
+     *
+     * @param isbn10 the ISBN-10 to validate (without hyphens)
+     * @return true if valid ISBN-10, false otherwise
+     */
+    private boolean isValidIsbn10(String isbn10) {
+        if (!isbn10.matches("^[0-9]{9}[0-9X]$")) {
+            return false;
+        }
+
+        int sum = 0;
+        for (int i = 0; i < ISBN_10_CHECKSUM_LIMIT; i++) {
+            int digit = Character.getNumericValue(isbn10.charAt(i));
+            sum += (i + 1) * digit;
+        }
+
+        char checkChar = isbn10.charAt(ISBN_10_CHECKSUM_LIMIT);
+        int checkDigit = (checkChar == 'X') ? ISBN_10_X_VALUE
+            : Character.getNumericValue(checkChar);
+
+        return (sum % ISBN_10_MODULUS) == checkDigit;
+    }
+
+    /**
+     * Validates ISBN-13 format and checksum.
+     *
+     * @param isbn13 the ISBN-13 to validate (without hyphens)
+     * @return true if valid ISBN-13, false otherwise
+     */
+    private boolean isValidIsbn13(String isbn13) {
+        if (!isbn13.matches("^[0-9]{13}$")) {
+            return false;
+        }
+
+        int sum = 0;
+        for (int i = 0; i < ISBN_13_CHECKSUM_LIMIT; i++) {
+            int digit = Character.getNumericValue(isbn13.charAt(i));
+            sum += (i % 2 == 0) ? digit : digit * ISBN_13_ODD_MULTIPLIER;
+        }
+
+        int checkDigit = Character.getNumericValue(isbn13.charAt(ISBN_13_CHECKSUM_LIMIT));
+        int calculatedCheck = (BASE_10 - (sum % BASE_10)) % BASE_10;
+
+        return checkDigit == calculatedCheck;
     }
 }
