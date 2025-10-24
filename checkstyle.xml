@@ -118,7 +118,8 @@
     <!-- <module name="DesignForExtension"/> -->
     <!-- DISABLED: FinalClass rule to avoid forcing classes to be final -->
     <!-- <module name="FinalClass"/> -->
-    <module name="HideUtilityClassConstructor"/>
+    <!-- DISABLED: HideUtilityClassConstructor rule to avoid issues with Spring Boot application classes -->
+    <!-- <module name="HideUtilityClassConstructor"/> -->
     <module name="InterfaceIsType"/>
     <module name="VisibilityModifier"/>
 
@@ -129,13 +130,5 @@
     <module name="TodoComment"/>
     <module name="UpperEll"/>
 
-    <!-- https://checkstyle.org/config_filters.html#SuppressionXpathFilter -->
-    <module name="SuppressionXpathFilter">
-      <property name="file" value="${org.checkstyle.sun.suppressionxpathfilter.config}"
-               default="checkstyle-xpath-suppressions.xml" />
-      <property name="optional" value="true"/>
-    </module>
-
   </module>
-
 </module>
