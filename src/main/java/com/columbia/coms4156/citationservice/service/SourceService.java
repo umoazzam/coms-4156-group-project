@@ -311,6 +311,8 @@ public class SourceService {
     }
 
     List<String> savedCitationIds = new ArrayList<>();
+    // collect errors encountered while processing sources (e.g., unsupported media types)
+    List<String> errors = new ArrayList<>();
 
     for (SourceDTO src : request.getSources()) {
       String rawType = src.getMediaType();
@@ -381,11 +383,6 @@ public class SourceService {
             video.setTitle(title);
             video.setAuthor(author);
             video.setDirector(src.getDirector());
-            // convert duration if provided in mm:ss to seconds if possible
-            if (src.getDuration() != null) {
-              Integer seconds = parseDurationToSeconds(src.getDuration());
-              video.setDurationSeconds(seconds);
-            }
             video.setPlatform(src.getPlatform());
             video.setUrl(src.getUrl());
             video.setReleaseYear(src.getYear());
@@ -395,7 +392,12 @@ public class SourceService {
           break;
 
         default:
-          // unknown mediaType -> skip
+          // unknown mediaType -> record an error and skip
+          String unsupported = String.format("Unsupported mediaType '%s' for "
+                  + "source(title='%s', author='%s')", rawType, title, author);
+          errors.add(unsupported);
+          errors.add(String.format("MediaType error (book): title='%s', author="
+                  + "'%s'", title, author));
           continue;
       }
 
@@ -423,34 +425,6 @@ public class SourceService {
       }
     }
 
-    return new SourceBatchResponse(submission.getId(), savedCitationIds);
-  }
-
-  /**
-   * Parses a duration string into seconds.
-   *
-   * @param duration the duration string in the format hh:mm:ss, mm:ss, or seconds
-   * @return the total duration in seconds, or null if parsing fails
-   */
-  private Integer parseDurationToSeconds(String duration) {
-    try {
-      String[] parts = duration.split(":");
-      int seconds = 0;
-      if (parts.length == DURATION_PARTS_WITH_MINUTES) {
-        int minutes = Integer.parseInt(parts[0].trim());
-        int secs = Integer.parseInt(parts[1].trim());
-        seconds = minutes * SECONDS_IN_MINUTE + secs;
-      } else if (parts.length == DURATION_PARTS_WITH_HOURS) {
-        int hours = Integer.parseInt(parts[0].trim());
-        int minutes = Integer.parseInt(parts[1].trim());
-        int secs = Integer.parseInt(parts[2].trim());
-        seconds = hours * SECONDS_IN_HOUR + minutes * SECONDS_IN_MINUTE + secs;
-      } else {
-        seconds = Integer.parseInt(duration.trim());
-      }
-      return seconds;
-    } catch (Exception e) {
-      return null;
-    }
+    return new SourceBatchResponse(submission.getId(), savedCitationIds, errors);
   }
 }
