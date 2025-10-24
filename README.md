@@ -239,10 +239,10 @@ These are API tests you can use to exercise the service endpoints (create, retri
 - CORS is enabled for all origins (development setup)
 
 ## Next Steps
-
 Currently, the service supports basic citation generation and source management. Before the first demo, the team will be refactoring the APIs
 to support a more flexible citation generation mechanism that allows for backfilling missing information with AI, a feature to be added in the second iteration.
 These changes will include:
 - Modifying GET endpoints to utilize both a Citation object and a Source object according to the linked [API design](https://docs.google.com/document/d/1h68plDcqBSd3OXQ8W1byPptmb5XWFZ081d9pRdjwgis/edit?usp=sharing).
 - Fix controller methods associated with these endpoints.
 - Update README to reflect new API usage.
+- Complete AI documentation used for the first iteration.
