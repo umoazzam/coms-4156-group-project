@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface for Book entity database operations.
@@ -51,4 +52,15 @@ public interface BookRepository extends JpaRepository<Book, Long> {
      * @throws IllegalArgumentException if year is null
      */
     List<Book> findByPublicationYear(Integer year);
+
+    /**
+     * Finds a book by its title and author, ignoring case.
+     * Useful for detecting duplicates when adding new books.
+     *
+     * @param title  The title of the book to search for (case-insensitive)
+     * @param author The author of the book to search for (case-insensitive)
+     * @return An Optional containing the found book, or empty if no match is found
+     * @throws IllegalArgumentException if title or author is null
+     */
+    Optional<Book> findByTitleIgnoreCaseAndAuthorIgnoreCase(String title, String author);
 }
