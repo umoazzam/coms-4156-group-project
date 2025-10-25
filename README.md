@@ -2,6 +2,15 @@
 
 An API-based citation creation and management service that allows clients to build, maintain, and enrich libraries of sources while automatically generating formatted citations and bibliographies.
 
+Authors:
+- Alexa Kafka | ak5124
+- Abdulmohsen Alghannam | afa2165
+- Matthew Labasan | mjl2278
+- Sungjun Lee | sl5778
+- Usman Moazzam | uam2105
+
+To view the original project proposal, click [here](https://docs.google.com/document/d/1V7UUUKATDx-as5N2krsXF6NSkbQoo0iBBf0t164SlHI/edit?usp=sharing).
+
 ## Current Features
 
 - **Multi-Style Citation Generation**: Supports MLA, APA, and Chicago citation formats
@@ -107,36 +116,37 @@ See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit)
 
 ### SourceController
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/source/book` | Create a new Book |
-| GET  | `/api/source/book` | Get all Books |
-| GET  | `/api/source/book/{id}` | Get a Book by ID |
-| PUT  | `/api/source/book/{id}` | Update a Book |
-| DELETE | `/api/source/book/{id}` | Delete a Book |
-| POST | `/api/source/video` | Create a new Video |
-| GET  | `/api/source/video` | Get all Videos |
-| GET  | `/api/source/video/{id}` | Get a Video by ID |
-| PUT  | `/api/source/video/{id}` | Update a Video |
-| DELETE | `/api/source/video/{id}` | Delete a Video |
-| POST | `/api/source/article` | Create a new Article |
-| GET  | `/api/source/article` | Get all Articles |
-| GET  | `/api/source/article/{id}` | Get an Article by ID |
-| PUT  | `/api/source/article/{id}` | Update an Article |
-| DELETE | `/api/source/article/{id}` | Delete an Article |
+| Method | Endpoint                   | Description          | Input                                                                               | Output                           |
+|--------|----------------------------|----------------------|-------------------------------------------------------------------------------------|----------------------------------|
+| POST   | `/api/source/book`         | Create a new Book    | Book JSON (title*, author*, publisher, publicationYear, city, edition)              | Book object with generated ID    |
+| GET    | `/api/source/book`         | Get all Books        | None                                                                                | List of Book objects             |
+| GET    | `/api/source/book/{id}`    | Get a Book by ID     | Path param: id (Long)                                                               | Book object or 404               |
+| PUT    | `/api/source/book/{id}`    | Update a Book        | Path param: id (Long), Book JSON                                                    | Updated Book object or 404       |
+| DELETE | `/api/source/book/{id}`    | Delete a Book        | Path param: id (Long)                                                               | 204 No Content or 404            |
+| POST   | `/api/source/video`        | Create a new Video   | Video JSON (title*, author*, director, durationSeconds, platform, url, releaseYear) | Video object with generated ID   |
+| GET    | `/api/source/video`        | Get all Videos       | None                                                                                | List of Video objects            |
+| GET    | `/api/source/video/{id}`   | Get a Video by ID    | Path param: id (Long)                                                               | Video object or 404              |
+| PUT    | `/api/source/video/{id}`   | Update a Video       | Path param: id (Long), Video JSON                                                   | Updated Video object or 404      |
+| DELETE | `/api/source/video/{id}`   | Delete a Video       | Path param: id (Long)                                                               | 204 No Content or 404            |
+| POST   | `/api/source/article`      | Create a new Article | Article JSON (title*, author*, journal, volume, issue, pages, doi, publicationYear) | Article object with generated ID |
+| GET    | `/api/source/article`      | Get all Articles     | None                                                                                | List of Article objects          |
+| GET    | `/api/source/article/{id}` | Get an Article by ID | Path param: id (Long)                                                               | Article object or 404            |
+| PUT    | `/api/source/article/{id}` | Update an Article    | Path param: id (Long), Article JSON                                                 | Updated Article object or 404    |
+| DELETE | `/api/source/article/{id}` | Delete an Article    | Path param: id (Long)                                                               | 204 No Content or 404            |
 
+*Required fields
 
 ### CitationController
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/cite/book/{id}` | Generate MLA citation for a stored Book by ID |
-| POST | `/api/cite/book` | Generate MLA citation from provided Book JSON (no save) |
-| GET | `/api/cite/video/{id}` | Generate MLA citation for a stored Video by ID |
-| POST | `/api/cite/video/citation` | Generate MLA citation from provided Video JSON (no save) |
-| GET | `/api/cite/article/{id}/citation` | Generate MLA citation for a stored Article by ID |
-| POST | `/api/cite/article/citation` | Generate MLA citation from provided Article JSON (no save) |
-| **GET** | **`/api/cite/source/{sourceId}`** | **Generate citation for a single source with style and backfill options** |
-| **GET** | **`/api/cite/group/{submissionId}`** | **Generate citations for all sources in a submission group** |
+| Method | Endpoint                          | Description                                                           | Input                                                                                            | Output                     |
+|--------|-----------------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|----------------------------|
+| GET    | `/api/cite/book/{id}`             | Generate MLA citation for a stored Book by ID                         | Path param: id (Long)                                                                            | Citation string or 404     |
+| POST   | `/api/cite/book`                  | Generate MLA citation from provided Book JSON (no save)               | Book JSON + Query param: style (default: "MLA")                                                  | Citation string            |
+| GET    | `/api/cite/video/{id}`            | Generate MLA citation for a stored Video by ID                        | Path param: id (Long)                                                                            | Citation string or 404     |
+| POST   | `/api/cite/video/citation`        | Generate MLA citation from provided Video JSON (no save)              | Video JSON + Query param: style (default: "MLA")                                                 | Citation string            |
+| GET    | `/api/cite/article/{id}/citation` | Generate MLA citation for a stored Article by ID                      | Path param: id (Long)                                                                            | Citation string or 404     |
+| POST   | `/api/cite/article/citation`      | Generate MLA citation from provided Article JSON (no save)            | Article JSON + Query param: style (default: "MLA")                                               | Citation string            |
+| GET    | `/api/cite/source/{sourceId}`     | Generate citation for a single source with style and backfill options | Path param: sourceId (Long), Query params: style (default: "MLA"), backfill (default: false)     | CitationResponse JSON      |
+| GET    | `/api/cite/group/{submissionId}`  | Generate citations for all sources in a submission group              | Path param: submissionId (Long), Query params: style (default: "MLA"), backfill (default: false) | GroupCitationResponse JSON |
 
 
 ## API Usage Examples
@@ -229,14 +239,36 @@ Generate citations for all sources in a submission group.
 ```
 
 ## Testing with Postman
-
 These are API tests you can use to exercise the service endpoints (create, retrieve, update, delete sources and generate citations).
 
 [Postman collection — API tests](https://web.postman.co/workspace/My-Workspace~944de483-7347-4047-89cb-e75c81e1ba7b/collection/32914220-d96cfb1c-3cc6-48fc-993f-46baea892753?action=share&source=copy-link&creator=32914220)
 
-
 ## Development Notes
 - CORS is enabled for all origins (development setup)
+
+### Project Management
+For project management and task tracking, we used Notion. You can find the project board here: [T2: First Iteration Project Board](https://www.notion.so/27bb9d8608c380aaaeb7f3426296a032?v=27bb9d8608c381eab889000c5e024d6d&source=copy_link)
+
+### Testing Framework
+For unit testing, we utilized JUnit and Mockito. Integration tests can be added in future iterations. We also used Postman for API endpoint testing. Our test cases are located in the `src/test/java/com/columbia/coms4156/citationservice/src/test` directory.
+
+For branch coverage analysis, we used JaCoCo. To generate a branch coverage report, run the following Maven command:
+
+```bash
+mvn jacoco:report
+```
+
+We have included a sample branch coverage report generated using JaCoCo, which can be found in the root directory as `t2-branch-coverage-report.html`. This report shows that we reached approximately 69% branch coverage for this iteration; for the next iteration, we plan to expand our testing to the controller and service layers and meet a minimum of 80% branch coverage for the whole project.
+
+### Style Checking
+We used Checkstyle to ensure code quality and adherence to coding standards. The Checkstyle configuration file is located in the root directory as `checkstyle.xml`. To run Checkstyle, use the following Maven command:
+
+```bash
+mvn checkstyle:check
+```
+
+### AI Usage
+[waiting for info from team]
 
 ## Next Steps
 Currently, the service supports basic citation generation and source management. Before the first demo, the team will be refactoring the APIs
