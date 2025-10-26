@@ -198,6 +198,7 @@ public class CitationService {
     }
 
     /**
+     * UPDATE NEEDED FOR NEW API FLOW
      * Generate a citation for a single source by sourceId with specified style and backfill option.
      *
      * @param sourceId the ID of the source to generate citation for
@@ -222,6 +223,7 @@ public class CitationService {
     }
 
     /**
+     * UPDATE NEEDED FOR NEW API FLOW
      * Generate citations for all sources in a submission group.
      *
      * @param submissionId the ID of the submission containing sources

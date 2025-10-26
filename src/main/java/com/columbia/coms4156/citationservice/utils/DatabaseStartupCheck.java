@@ -10,6 +10,8 @@ import java.sql.Connection;
  * Utility class to check database connectivity at application startup.
  * This class implements CommandLineRunner to execute database connectivity
  * checks when the Spring Boot application starts.
+ *
+ * This class was AI-generated for utility.
  */
 @Component
 public final class DatabaseStartupCheck implements CommandLineRunner {
