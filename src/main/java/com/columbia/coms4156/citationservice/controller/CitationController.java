@@ -173,7 +173,9 @@ public class CitationController {
     }
   }
 
+  // --- General Use Endpoints ---
   /**
+   * UPDATE NEEDED FOR NEW API FLOW
    * Generate citation for a single source by sourceId with specified style and backfill option.
    *
    * @param sourceId The unique identifier of the source to generate citation for
@@ -199,6 +201,7 @@ public class CitationController {
   }
 
   /**
+   * UPDATE NEEDED FOR NEW API FLOW
    * Generate citations for all sources in a submission group.
    *
    * @param submissionId The unique identifier of the submission group
