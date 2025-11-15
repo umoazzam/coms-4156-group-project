@@ -30,32 +30,52 @@ public class CitationService {
     /**
      * Repository for managing Book entities.
      */
-    @Autowired
-    private BookRepository bookRepository;
-
+    private final BookRepository bookRepository;
     /**
      * Repository for managing Video entities.
      */
-    @Autowired
-    private VideoRepository videoRepository;
-
+    private final VideoRepository videoRepository;
     /**
      * Repository for managing Article entities.
      */
-    @Autowired
-    private ArticleRepository articleRepository;
-
+    private final ArticleRepository articleRepository;
     /**
      * Repository for managing Citation entities.
      */
-    @Autowired
-    private CitationRepository citationRepository;
-
+    private final CitationRepository citationRepository;
     /**
      * Repository for managing Submission entities.
      */
+    private final SubmissionRepository submissionRepository;
+    /**
+     * Service for fetching book data from Google Books API.
+     */
+    private final GoogleBooksService googleBooksService;
+
+    /**
+     * Constructs a new CitationService with the given repositories and services.
+     * @param pBookRepository the book repository
+     * @param pVideoRepository the video repository
+     * @param pArticleRepository the article repository
+     * @param pCitationRepository the citation repository
+     * @param pSubmissionRepository the submission repository
+     * @param pGoogleBooksService the google books service
+     */
     @Autowired
-    private SubmissionRepository submissionRepository;
+    public CitationService(BookRepository pBookRepository,
+                           VideoRepository pVideoRepository,
+                           ArticleRepository pArticleRepository,
+                           CitationRepository pCitationRepository,
+                           SubmissionRepository pSubmissionRepository,
+                           GoogleBooksService pGoogleBooksService) {
+        this.bookRepository = pBookRepository;
+        this.videoRepository = pVideoRepository;
+        this.articleRepository = pArticleRepository;
+        this.citationRepository = pCitationRepository;
+        this.submissionRepository = pSubmissionRepository;
+        this.googleBooksService = pGoogleBooksService;
+    }
+
 
     // CITATION GENERATION METHODS
     /**
@@ -265,9 +285,31 @@ public class CitationService {
                                              boolean backfill) {
         switch (mediaType.toLowerCase()) {
             case "book":
-                Optional<Book> book = bookRepository.findById(mediaId);
-                if (book.isPresent()) {
-                    return generateCitationByStyle(book.get(), style);
+                Optional<Book> bookOptional = bookRepository.findById(mediaId);
+                if (bookOptional.isPresent()) {
+                    Book book = bookOptional.get();
+                    if (backfill && book.getIsbn() != null && !book.getIsbn().isEmpty()) {
+                        Book backfilledBook = googleBooksService
+                                .fetchBookDataByIsbn(book.getIsbn()).block();
+                        if (backfilledBook != null) {
+                            // Merge data, giving precedence to the backfilled data
+                            Book mergedBook = new Book();
+                            mergedBook.setTitle(backfilledBook.getTitle() != null
+                                    ? backfilledBook.getTitle() : book.getTitle());
+                            mergedBook.setAuthor(backfilledBook.getAuthor() != null
+                                    ? backfilledBook.getAuthor() : book.getAuthor());
+                            mergedBook.setPublisher(backfilledBook.getPublisher() != null
+                                    ? backfilledBook.getPublisher() : book.getPublisher());
+                            mergedBook.setPublicationYear(
+                                    backfilledBook.getPublicationYear() != null
+                                    ? backfilledBook.getPublicationYear()
+                                            : book.getPublicationYear());
+                            mergedBook.setIsbn(book.getIsbn()); // Keep original ISBN
+                            mergedBook.setCity(book.getCity()); // Keep original city
+                            return generateCitationByStyle(mergedBook, style);
+                        }
+                    }
+                    return generateCitationByStyle(book, style);
                 }
                 break;
             case "video":
