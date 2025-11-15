@@ -452,18 +452,10 @@ public class SourceService {
       Book googleBookData = googleBookMono.block();
 
       if (googleBookData != null) {
-        if (book.getTitle() == null || book.getTitle().isEmpty()) {
-          book.setTitle(googleBookData.getTitle());
-        }
-        if (book.getAuthor() == null || book.getAuthor().isEmpty()) {
-          book.setAuthor(googleBookData.getAuthor());
-        }
-        if (book.getPublisher() == null || book.getPublisher().isEmpty()) {
-          book.setPublisher(googleBookData.getPublisher());
-        }
-        if (book.getPublicationYear() == null) {
-          book.setPublicationYear(googleBookData.getPublicationYear());
-        }
+        book.setTitle(googleBookData.getTitle());
+        book.setAuthor(googleBookData.getAuthor());
+        book.setPublisher(googleBookData.getPublisher());
+        book.setPublicationYear(googleBookData.getPublicationYear());
       }
     }
     return book;

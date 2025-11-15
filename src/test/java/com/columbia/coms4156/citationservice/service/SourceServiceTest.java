@@ -49,7 +49,7 @@ class SourceServiceTest {
     }
 
     @Test
-    void saveBookWithBackfillFillsMissingData() {
+    void saveBookWithBackfillOverridesData() {
         // Arrange
         Book bookToSave = new Book("Original Title", "Original Author");
         bookToSave.setIsbn("9780140449112");
@@ -67,38 +67,14 @@ class SourceServiceTest {
         Book savedBook = sourceService.saveBook(bookToSave, true);
 
         // Assert
-        assertEquals("Original Title", savedBook.getTitle());
-        assertEquals("Original Author", savedBook.getAuthor());
+        assertEquals("Google Book Title", savedBook.getTitle());
+        assertEquals("Google Author", savedBook.getAuthor());
         assertEquals("Google Publisher", savedBook.getPublisher());
         assertEquals(2023, savedBook.getPublicationYear());
         assertEquals("9780140449112", savedBook.getIsbn());
     }
 
-    @Test
-    void saveBookWithBackfillDoesNotOverrideExistingData() {
-        // Arrange
-        Book bookToSave = new Book("Original Title", "Original Author");
-        bookToSave.setIsbn("9780140449112");
-        bookToSave.setPublisher("Original Publisher");
 
-        Book googleBook = new Book();
-        googleBook.setTitle("Google Book Title");
-        googleBook.setAuthor("Google Author");
-        googleBook.setPublisher("Google Publisher");
-        googleBook.setPublicationYear(2023);
-
-        when(googleBooksService.fetchBookDataByIsbn("9780140449112")).thenReturn(Mono.just(googleBook));
-        when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // Act
-        Book savedBook = sourceService.saveBook(bookToSave, true);
-
-        // Assert
-        assertEquals("Original Title", savedBook.getTitle());
-        assertEquals("Original Author", savedBook.getAuthor());
-        assertEquals("Original Publisher", savedBook.getPublisher());
-        assertEquals(2023, savedBook.getPublicationYear());
-    }
 
     @Test
     void saveBookWithoutBackfillDoesNotCallGoogleBooks() {
@@ -133,7 +109,7 @@ class SourceServiceTest {
     }
 
     @Test
-    void addOrAppendSourcesWithBackfillFillsMissingData() {
+    void addOrAppendSourcesWithBackfillOverridesData() {
         // Arrange
         SourceDTO sourceDTO = new SourceDTO();
         sourceDTO.setMediaType("book");
@@ -173,8 +149,8 @@ class SourceServiceTest {
 
         // Assert
         verify(bookRepository).save(argThat(book ->
-                "Original Title".equals(book.getTitle()) && // Should not be overwritten
-                "Original Author".equals(book.getAuthor()) && // Should not be overwritten
+                "Google Book Title".equals(book.getTitle()) &&
+                "Google Author".equals(book.getAuthor()) &&
                 "Google Publisher".equals(book.getPublisher()) &&
                 Integer.valueOf(2023).equals(book.getPublicationYear())
         ));
