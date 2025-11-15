@@ -51,12 +51,15 @@ public class SourceController {
    * Create a new book citation source in the database.
    *
    * @param book The book entity to create
+   * @param backfill Whether to attempt to backfill missing data from Google Books API
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the created book with HTTP 201 status if successful,
    *         or HTTP 500 if an error occurs
    */
   @PostMapping("/book")
-  public ResponseEntity<?> createBook(@Valid @RequestBody Book book, HttpServletRequest request) {
+  public ResponseEntity<?> createBook(@Valid @RequestBody Book book,
+                                      @RequestParam(defaultValue = "false") boolean backfill,
+                                      HttpServletRequest request) {
     try {
       if (book == null) {
         ErrorResponse error = new ErrorResponse(
@@ -68,7 +71,7 @@ public class SourceController {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
       }
 
-      Book savedBook = sourceService.saveBook(book);
+      Book savedBook = sourceService.saveBook(book, backfill);
       return new ResponseEntity<>(savedBook, HttpStatus.CREATED);
     } catch (Exception e) {
       ErrorResponse error = new ErrorResponse(
@@ -675,13 +678,16 @@ public class SourceController {
    *
    * @param request The bulk source request containing multiple sources to add
    * @param submissionId Optional submission ID for tracking
+   * @param backfill Whether to attempt to backfill missing data
+   *                 from Google Books API for book sources
    * @return ResponseEntity containing the batch response with HTTP 200 status if successful,
    *         or HTTP 500 if an error occurs
    */
   @PostMapping("/sources")
   public ResponseEntity<SourceBatchResponse> addSources(
       @RequestBody BulkSourceRequest request,
-      @RequestParam(value = "submissionId", required = false) Long submissionId) {
+      @RequestParam(value = "submissionId", required = false) Long submissionId,
+      @RequestParam(defaultValue = "false") boolean backfill) {
     try {
       // return 400 Bad Request when the request has no sources
       if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
@@ -691,7 +697,7 @@ public class SourceController {
         resp.setErrors(Arrays.asList("No sources provided in request"));
         return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
       }
-      SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+      SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId, backfill);
       return new ResponseEntity<>(resp, HttpStatus.OK);
     } catch (IllegalArgumentException e) {
       SourceBatchResponse resp = new SourceBatchResponse();

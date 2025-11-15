@@ -1,5 +1,5 @@
-package com.columbia.coms4156.citationservice.controller;
-
+import com.columbia.coms4156.citationservice.model.Book;
+import com.columbia.coms4156.citationservice.controller.SourceController;
 import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
 import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
@@ -24,7 +24,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.test.context.ContextConfiguration;
+import com.columbia.coms4156.citationservice.CitationServiceApplication;
+
 @WebMvcTest(SourceController.class)
+@ContextConfiguration(classes = CitationServiceApplication.class)
 class SourceControllerTest {
 
     @Autowired
@@ -35,6 +39,27 @@ class SourceControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    @DisplayName("POST /api/source/book?backfill=true creates a new book with backfill")
+    void createBookWithBackfillShouldSucceed() throws Exception {
+        // Arrange
+        Book book = new Book();
+        book.setTitle("Test Book");
+        book.setAuthor("Test Author");
+        book.setIsbn("9780140449112");
+
+        given(sourceService.saveBook(any(Book.class), eq(true))).willReturn(book);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/source/book?backfill=true")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(book)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Test Book"))
+                .andExpect(jsonPath("$.author").value("Test Author"))
+                .andExpect(jsonPath("$.isbn").value("9780140449112"));
+    }
 
     @Test
     @DisplayName("POST /api/source/sources creates a new submission and returns source ids")
@@ -60,10 +85,10 @@ class SourceControllerTest {
         request.setSources(Arrays.asList(s1, s2));
 
         SourceBatchResponse resp = new SourceBatchResponse(123L, Arrays.asList("10", "11"));
-        given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), any())).willReturn(resp);
+        given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), any(), eq(false))).willReturn(resp);
 
         // Act & Assert
-        mockMvc.perform(post("/api/source/sources")
+        mockMvc.perform(post("/api/source/sources?backfill=false")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -87,9 +112,9 @@ class SourceControllerTest {
         request.setSources(Arrays.asList(s));
 
         SourceBatchResponse resp = new SourceBatchResponse(222L, Arrays.asList("55"));
-        given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), eq(222L))).willReturn(resp);
+        given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), eq(222L), eq(false))).willReturn(resp);
 
-        mockMvc.perform(post("/api/source/sources?submissionId=222")
+        mockMvc.perform(post("/api/source/sources?submissionId=222&backfill=false")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -105,10 +130,10 @@ class SourceControllerTest {
         request.setSources(Arrays.asList(new SourceDTO()));
 
         // service throws IllegalArgumentException which controller maps to 404
-        given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), eq(999L)))
+        given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), eq(999L), any(Boolean.class)))
                 .willThrow(new IllegalArgumentException("submissionId not found: 999"));
 
-        mockMvc.perform(post("/api/source/sources?submissionId=999")
+        mockMvc.perform(post("/api/source/sources?submissionId=999&backfill=false")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());

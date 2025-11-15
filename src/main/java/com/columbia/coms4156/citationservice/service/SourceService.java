@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,12 @@ public class SourceService {
   @Autowired
   private UserRepository userRepository;
 
+  /**
+   * Service for interacting with the Google Books API.
+   */
+  @Autowired
+  private GoogleBooksService googleBooksService;
+
   /** ObjectMapper for JSON processing. */
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -89,12 +96,14 @@ public class SourceService {
 
   // --- Book Methods ---
   /**
-   * Saves a Book entity to the database.
+   * Saves a Book entity to the database, with optional backfill from Google Books API.
    *
    * @param book the Book entity to save
+   * @param backfill whether to attempt to backfill missing data from Google Books API
    * @return the saved Book entity
    */
-  public Book saveBook(Book book) {
+  public Book saveBook(Book book, boolean backfill) {
+    book = applyBookBackfill(book, backfill);
     return bookRepository.save(book);
   }
 
@@ -280,10 +289,15 @@ public class SourceService {
    *
    * @param request the bulk request containing user and sources to process
    * @param submissionId the optional existing submission id to append to
+   * @param backfill whether to attempt to backfill missing data
+   *                 from Google Books API for book sources
    * @return a SourceBatchResponse containing the submission id and saved citation ids
    */
   @Transactional
-  public SourceBatchResponse addOrAppendSources(BulkSourceRequest request, Long submissionId) {
+  public SourceBatchResponse addOrAppendSources(
+      BulkSourceRequest request,
+      Long submissionId,
+      boolean backfill) {
     if (request == null
         || request.getSources() == null
         || request.getSources().isEmpty()) {
@@ -326,27 +340,7 @@ public class SourceService {
 
       switch (type) {
         case "book":
-          // try find by title+author
-          Optional<Book> bOpt = bookRepository
-              .findByTitleIgnoreCaseAndAuthorIgnoreCase(
-                  title,
-                  author
-              );
-          Book book;
-          if (bOpt.isPresent()) {
-            book = bOpt.get();
-          } else {
-            book = new Book();
-            book.setTitle(title);
-            book.setAuthor(author);
-            book.setIsbn(src.getIsbn());
-            book.setPublisher(src.getPublisher());
-            book.setPublicationYear(src.getYear());
-            book.setCity(src.getCity());
-            book.setEdition(src.getEdition());
-            book = bookRepository.save(book);
-          }
-          mediaId = book.getId();
+          mediaId = processBookSource(src, title, author, backfill);
           break;
 
         case "article":
@@ -394,7 +388,7 @@ public class SourceService {
         default:
           // unknown mediaType -> record an error and skip
           String unsupported = String.format("Unsupported mediaType '%s' for "
-                  + "source(title='%s', author='%s')", rawType, title, author);
+              + "source(title='%s', author='%s')", rawType, title, author);
           errors.add(unsupported);
           errors.add(String.format("MediaType error (book): title='%s', author="
                   + "'%s'", title, author));
@@ -426,5 +420,52 @@ public class SourceService {
     }
 
     return new SourceBatchResponse(submission.getId(), savedCitationIds, errors);
+  }
+
+  private Long processBookSource(SourceDTO src, String title, String author, boolean backfill) {
+    Optional<Book> bOpt = bookRepository
+        .findByTitleIgnoreCaseAndAuthorIgnoreCase(
+            title,
+            author
+        );
+    Book book;
+    if (bOpt.isPresent()) {
+      book = bOpt.get();
+    } else {
+      book = new Book();
+      book.setTitle(title);
+      book.setAuthor(author);
+      book.setIsbn(src.getIsbn());
+      book.setPublisher(src.getPublisher());
+      book.setPublicationYear(src.getYear());
+      book.setCity(src.getCity());
+      book.setEdition(src.getEdition());
+      book = applyBookBackfill(book, backfill);
+      book = bookRepository.save(book);
+    }
+    return book.getId();
+  }
+
+  private Book applyBookBackfill(Book book, boolean backfill) {
+    if (backfill && book.getIsbn() != null && !book.getIsbn().isEmpty()) {
+      Mono<Book> googleBookMono = googleBooksService.fetchBookDataByIsbn(book.getIsbn());
+      Book googleBookData = googleBookMono.block();
+
+      if (googleBookData != null) {
+        if (book.getTitle() == null || book.getTitle().isEmpty()) {
+          book.setTitle(googleBookData.getTitle());
+        }
+        if (book.getAuthor() == null || book.getAuthor().isEmpty()) {
+          book.setAuthor(googleBookData.getAuthor());
+        }
+        if (book.getPublisher() == null || book.getPublisher().isEmpty()) {
+          book.setPublisher(googleBookData.getPublisher());
+        }
+        if (book.getPublicationYear() == null) {
+          book.setPublicationYear(googleBookData.getPublicationYear());
+        }
+      }
+    }
+    return book;
   }
 }
