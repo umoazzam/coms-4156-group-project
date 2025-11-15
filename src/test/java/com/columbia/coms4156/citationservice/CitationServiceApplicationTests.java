@@ -20,7 +20,10 @@ import org.springframework.boot.test.context.SpringBootTest;
  * @version 1.0
  * @since 1.0
  */
+import org.springframework.test.context.ActiveProfiles;
+
 @SpringBootTest
+@ActiveProfiles("test")
 class CitationServiceApplicationTests {
 
     /**
