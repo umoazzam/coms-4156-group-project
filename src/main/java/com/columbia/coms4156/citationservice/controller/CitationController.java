@@ -1,15 +1,16 @@
 package com.columbia.coms4156.citationservice.controller;
 
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
+import com.columbia.coms4156.citationservice.exception.ValidationException;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.CitationResponse;
-import com.columbia.coms4156.citationservice.model.ErrorResponse;
 import com.columbia.coms4156.citationservice.model.GroupCitationResponse;
 import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.service.CitationService;
 import com.columbia.coms4156.citationservice.service.SourceService;
+import com.columbia.coms4156.citationservice.utils.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Optional;
 
 /**
  * REST Controller for Citation creation API endpoints.
@@ -45,6 +45,33 @@ public class CitationController {
   @Autowired
   private SourceService sourceService;
 
+  /**
+   * Validates that an ID is not null and is positive.
+   *
+   * @param id the ID to validate
+   * @param resourceName the name of the resource (e.g., "Book", "Video")
+   * @throws ValidationException if the ID is invalid
+   */
+  private void validateId(Long id, String resourceName) {
+    if (id == null || id <= 0) {
+      throw new ValidationException(
+          resourceName + " ID must be a positive integer. Provided ID: " + id);
+    }
+  }
+
+  /**
+   * Validates that a style parameter is not null or empty.
+   *
+   * @param style the style to validate
+   * @throws ValidationException if the style is invalid
+   */
+  private void validateStyle(String style) {
+    if (style == null || style.trim().isEmpty()) {
+      throw new ValidationException(
+          "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO");
+    }
+  }
+
   // --- Book Endpoints ---
   /**
    * Generate an MLA format citation for a stored book.
@@ -56,48 +83,14 @@ public class CitationController {
    */
   @GetMapping("/book/{id}")
   public ResponseEntity<?> generateBookCitation(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Book ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Book");
 
-      Optional<Book> book = sourceService.findBookById(id);
-      if (book.isPresent()) {
-        String citation = citationService.generateMLACitation(book.get());
-        return new ResponseEntity<>(citation, HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Book Not Found",
-            "No book found with ID: " + id + ". Please verify the book ID and try again.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Invalid Book Data",
-          "Unable to generate citation: " + e.getMessage(),
-          HttpStatus.BAD_REQUEST.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating the citation for book ID " + id
-              + ": " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    Book book = sourceService.findBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No book found with ID: " + id + ". Please verify the book ID and try again."));
+
+    String citation = citationService.generateMLACitation(book);
+    return ResponseUtil.ok(citation);
   }
 
   /**
@@ -115,48 +108,15 @@ public class CitationController {
       @Valid @RequestBody Book book,
       @RequestParam(defaultValue = "MLA") String style,
       HttpServletRequest request) {
-    try {
-      if (book == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Book Data",
-            "Request body cannot be null. Please provide book information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      if (style == null || style.trim().isEmpty()) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Style Parameter",
-            "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      String citation = citationService.generateCitationByStyle(book, style);
-      return new ResponseEntity<>(citation, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Invalid Book Data",
-          "Unable to generate citation: " + e.getMessage()
-              + ". Please check that all required fields are provided.",
-          HttpStatus.BAD_REQUEST.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating the citation: "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    if (book == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide book information.");
     }
+
+    validateStyle(style);
+
+    String citation = citationService.generateCitationByStyle(book, style);
+    return ResponseUtil.ok(citation);
   }
 
   // --- Video Endpoints ---
@@ -171,48 +131,14 @@ public class CitationController {
   @GetMapping("/video/{id}")
   public ResponseEntity<?> generateVideoCitation(@PathVariable Long id,
                                                  HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Video ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Video");
 
-      Optional<Video> video = sourceService.findVideoById(id);
-      if (video.isPresent()) {
-        String citation = citationService.generateMLACitation(video.get());
-        return new ResponseEntity<>(citation, HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Video Not Found",
-            "No video found with ID: " + id + ". Please verify the video ID and try again.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Invalid Video Data",
-          "Unable to generate citation: " + e.getMessage(),
-          HttpStatus.BAD_REQUEST.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating the citation for video ID " + id
-              + ": " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    Video video = sourceService.findVideoById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No video found with ID: " + id + ". Please verify the video ID and try again."));
+
+    String citation = citationService.generateMLACitation(video);
+    return ResponseUtil.ok(citation);
   }
 
   /**
@@ -230,48 +156,15 @@ public class CitationController {
       @Valid @RequestBody Video video,
       @RequestParam(defaultValue = "MLA") String style,
       HttpServletRequest request) {
-    try {
-      if (video == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Video Data",
-            "Request body cannot be null. Please provide video information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      if (style == null || style.trim().isEmpty()) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Style Parameter",
-            "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      String citation = citationService.generateCitationByStyle(video, style);
-      return new ResponseEntity<>(citation, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Invalid Video Data",
-          "Unable to generate citation: " + e.getMessage()
-              + ". Please check that all required fields are provided.",
-          HttpStatus.BAD_REQUEST.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating the citation: "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    if (video == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide video information.");
     }
+
+    validateStyle(style);
+
+    String citation = citationService.generateCitationByStyle(video, style);
+    return ResponseUtil.ok(citation);
   }
 
   // --- Article Endpoints ---
@@ -286,48 +179,14 @@ public class CitationController {
   @GetMapping("/article/{id}/citation")
   public ResponseEntity<?> generateArticleCitation(@PathVariable Long id,
                                                    HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Article ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Article");
 
-      Optional<Article> article = sourceService.findArticleById(id);
-      if (article.isPresent()) {
-        String citation = citationService.generateMLACitation(article.get());
-        return new ResponseEntity<>(citation, HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Article Not Found",
-            "No article found with ID: " + id + ". Please verify the article ID and try again.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Invalid Article Data",
-          "Unable to generate citation: " + e.getMessage(),
-          HttpStatus.BAD_REQUEST.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating the citation for article ID " + id
-              + ": " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    Article article = sourceService.findArticleById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No article found with ID: " + id + ". Please verify the article ID and try again."));
+
+    String citation = citationService.generateMLACitation(article);
+    return ResponseUtil.ok(citation);
   }
 
   /**
@@ -345,48 +204,15 @@ public class CitationController {
       @Valid @RequestBody Article article,
       @RequestParam(defaultValue = "MLA") String style,
       HttpServletRequest request) {
-    try {
-      if (article == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Article Data",
-            "Request body cannot be null. Please provide article information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      if (style == null || style.trim().isEmpty()) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Style Parameter",
-            "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      String citation = citationService.generateCitationByStyle(article, style);
-      return new ResponseEntity<>(citation, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Invalid Article Data",
-          "Unable to generate citation: " + e.getMessage()
-              + ". Please check that all required fields are provided.",
-          HttpStatus.BAD_REQUEST.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating the citation: "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    if (article == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide article information.");
     }
+
+    validateStyle(style);
+
+    String citation = citationService.generateCitationByStyle(article, style);
+    return ResponseUtil.ok(citation);
   }
 
   // --- General Use Endpoints ---
@@ -407,48 +233,12 @@ public class CitationController {
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill,
       HttpServletRequest request) {
-    try {
-      if (sourceId == null || sourceId <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Source ID",
-            "Source ID must be a positive integer. Provided ID: " + sourceId,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(sourceId, "Source");
+    validateStyle(style);
 
-      if (style == null || style.trim().isEmpty()) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Style Parameter",
-            "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      CitationResponse response = citationService.generateCitationForSource(
-          sourceId, style, backfill);
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Source Not Found",
-          "No source found with ID: " + sourceId + ". " + e.getMessage(),
-          HttpStatus.NOT_FOUND.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating citation for source ID " + sourceId
-              + ": " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    CitationResponse response = citationService.generateCitationForSource(
+        sourceId, style, backfill);
+    return ResponseUtil.ok(response);
   }
 
   /**
@@ -468,47 +258,11 @@ public class CitationController {
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill,
       HttpServletRequest request) {
-    try {
-      if (submissionId == null || submissionId <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Submission ID",
-            "Submission ID must be a positive integer. Provided ID: " + submissionId,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(submissionId, "Submission");
+    validateStyle(style);
 
-      if (style == null || style.trim().isEmpty()) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid Style Parameter",
-            "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      GroupCitationResponse response = citationService.generateCitationsForGroup(
-          submissionId, style, backfill);
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
-      ErrorResponse error = new ErrorResponse(
-          "Submission Not Found",
-          "No submission found with ID: " + submissionId + ". " + e.getMessage(),
-          HttpStatus.NOT_FOUND.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Citation Generation Error",
-          "An unexpected error occurred while generating citations for submission ID "
-              + submissionId + ": " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    GroupCitationResponse response = citationService.generateCitationsForGroup(
+        submissionId, style, backfill);
+    return ResponseUtil.ok(response);
   }
 }
