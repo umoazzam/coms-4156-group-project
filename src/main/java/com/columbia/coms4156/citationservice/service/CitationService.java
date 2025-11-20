@@ -14,6 +14,7 @@ import com.columbia.coms4156.citationservice.repository.SubmissionRepository;
 import com.columbia.coms4156.citationservice.repository.VideoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -252,6 +253,7 @@ public class CitationService {
      * @return GroupCitationResponse containing all generated citations
      * @throws IllegalArgumentException if submission not found
      */
+    @Transactional
     public GroupCitationResponse generateCitationsForGroup(Long submissionId, String style,
                                                           boolean backfill) {
         Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);

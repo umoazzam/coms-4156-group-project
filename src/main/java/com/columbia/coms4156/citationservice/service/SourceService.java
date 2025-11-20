@@ -420,6 +420,7 @@ public class SourceService {
         savedCitationIds.add(existingCitation.get().getId().toString());
       } else {
         Citation citation = new Citation(submission, userInputJson, mediaId, type);
+        submission.addCitation(citation);
         citation = citationRepository.save(citation);
         savedCitationIds.add(citation.getId().toString());
       }
