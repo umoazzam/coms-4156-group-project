@@ -1,5 +1,6 @@
 package com.columbia.coms4156.citationservice.service;
 
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Citation;
@@ -233,7 +234,7 @@ public class CitationService {
         // Find the citation record
         Optional<Citation> citationOpt = citationRepository.findById(sourceId);
         if (citationOpt.isEmpty()) {
-            throw new IllegalArgumentException("Citation not found with ID: " + sourceId);
+            throw new ResourceNotFoundException("Citation not found with ID: " + sourceId);
         }
 
         Citation citation = citationOpt.get();
@@ -258,7 +259,7 @@ public class CitationService {
                                                           boolean backfill) {
         Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);
         if (submissionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Submission not found with ID: " + submissionId);
+            throw new ResourceNotFoundException("Submission not found with ID: " + submissionId);
         }
 
         Submission submission = submissionOpt.get();
@@ -329,7 +330,7 @@ public class CitationService {
             default:
                 throw new IllegalArgumentException("Unsupported media type: " + mediaType);
         }
-        throw new IllegalArgumentException("Media not found with ID: " + mediaId);
+        throw new ResourceNotFoundException("Media not found with ID: " + mediaId);
     }
 
     /**

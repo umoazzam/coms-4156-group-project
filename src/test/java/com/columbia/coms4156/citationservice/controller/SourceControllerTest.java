@@ -4,6 +4,7 @@ import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
 import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
 import com.columbia.coms4156.citationservice.controller.dto.UserDTO;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.service.SourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -104,9 +105,9 @@ class SourceControllerTest {
         request.setUser(new UserDTO());
         request.setSources(Arrays.asList(new SourceDTO()));
 
-        // service throws IllegalArgumentException which controller maps to 404
+        // service throws ResourceNotFoundException which controller maps to 404
         given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), eq(999L)))
-                .willThrow(new IllegalArgumentException("submissionId not found: 999"));
+                .willThrow(new ResourceNotFoundException("submissionId not found: 999"));
 
         mockMvc.perform(post("/api/source/sources?submissionId=999")
                         .contentType(MediaType.APPLICATION_JSON)

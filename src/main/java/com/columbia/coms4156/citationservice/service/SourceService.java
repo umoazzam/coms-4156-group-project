@@ -3,6 +3,7 @@ package com.columbia.coms4156.citationservice.service;
 import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Citation;
@@ -307,7 +308,7 @@ public class SourceService {
     } else {
       final String msg = "submissionId not found: " + submissionId;
       submission = submissionRepository.findById(submissionId)
-          .orElseThrow(() -> new IllegalArgumentException(msg));
+          .orElseThrow(() -> new ResourceNotFoundException(msg));
     }
 
     List<String> savedCitationIds = new ArrayList<>();

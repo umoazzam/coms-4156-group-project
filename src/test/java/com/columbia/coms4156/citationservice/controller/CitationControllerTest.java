@@ -2,6 +2,7 @@ package com.columbia.coms4156.citationservice.controller;
 
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.model.CitationResponse;
 import com.columbia.coms4156.citationservice.model.ErrorResponse;
 import com.columbia.coms4156.citationservice.model.GroupCitationResponse;
@@ -72,7 +73,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/book/{id}", bookId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Book Not Found"))
+                .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message").value("No book found with ID: 999. "
                         + "Please verify the book ID and try again."))
                 .andExpect(jsonPath("$.status").value(404))
@@ -85,7 +86,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/book/{id}", 0))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid ID"))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
     }
 
@@ -95,7 +96,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/book/{id}", -1))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid ID"));
+                .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
@@ -113,7 +114,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/book/{id}", bookId))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid Book Data"))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
     }
 
@@ -127,7 +128,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/book/{id}", bookId))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Citation Generation Error"))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
     }
 
@@ -216,7 +217,7 @@ class CitationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(book)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid Book Data"))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
     }
 
@@ -235,7 +236,7 @@ class CitationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(book)))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Citation Generation Error"))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
     }
 
@@ -269,7 +270,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/video/{id}", videoId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Video Not Found"))
+                .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -279,7 +280,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/video/{id}", 0))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid ID"));
+                .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
@@ -292,7 +293,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/video/{id}", videoId))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Citation Generation Error"))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
     }
 
@@ -363,7 +364,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/article/{id}/citation", articleId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Article Not Found"))
+                .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -373,7 +374,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/article/{id}/citation", 0))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid ID"));
+                .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
@@ -457,12 +458,12 @@ class CitationControllerTest {
         String defaultStyle = "MLA";
 
         given(citationService.generateCitationForSource(eq(sourceId), eq(defaultStyle), eq(false)))
-                .willThrow(new IllegalArgumentException("Citation not found with ID: " + sourceId));
+                .willThrow(new ResourceNotFoundException("Citation not found with ID: " + sourceId));
 
         // Act & Assert
         mockMvc.perform(get("/api/cite/source/{sourceId}", sourceId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Source Not Found"))
+                .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -472,7 +473,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/source/{sourceId}", 0))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid Source ID"))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
     }
 
@@ -490,7 +491,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/source/{sourceId}", sourceId))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Citation Generation Error"))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
     }
 
@@ -543,12 +544,12 @@ class CitationControllerTest {
         String defaultStyle = "MLA";
 
         given(citationService.generateCitationsForGroup(eq(submissionId), eq(defaultStyle), eq(false)))
-                .willThrow(new IllegalArgumentException("Submission not found with ID: " + submissionId));
+                .willThrow(new ResourceNotFoundException("Submission not found with ID: " + submissionId));
 
         // Act & Assert
         mockMvc.perform(get("/api/cite/group/{submissionId}", submissionId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Submission Not Found"))
+                .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -558,7 +559,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/group/{submissionId}", 0))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid Submission ID"))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
     }
 
@@ -576,7 +577,7 @@ class CitationControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/cite/group/{submissionId}", submissionId))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Citation Generation Error"))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
     }
 
