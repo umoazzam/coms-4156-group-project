@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 /**
  * Global exception handler for all controllers.
  * Centralizes exception handling and provides consistent error responses.
@@ -83,6 +88,73 @@ public class GlobalExceptionHandler {
         }
         LOGGER.warn("Validation error: {}", errorMessage.toString());
         return ResponseUtil.badRequest(errorMessage.toString(), request.getRequestURI());
+    }
+
+    /**
+     * Handles HttpMessageNotReadableException (e.g., malformed JSON).
+     *
+     * @param ex the exception
+     * @param request the web request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        LOGGER.warn("Malformed JSON request: {}", ex.getMessage());
+        return ResponseUtil.badRequest("Malformed JSON request: " + ex.getMessage(),
+                request.getRequestURI());
+    }
+
+    /**
+     * Handles HttpRequestMethodNotSupportedException.
+     *
+     * @param ex the exception
+     * @param request the web request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        LOGGER.warn("Method not allowed: {}", ex.getMessage());
+        return ResponseUtil.error("Method Not Allowed", ex.getMessage(),
+                org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED,
+                request.getRequestURI());
+    }
+
+    /**
+     * Handles HttpMediaTypeNotSupportedException.
+     *
+     * @param ex the exception
+     * @param request the web request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        LOGGER.warn("Unsupported media type: {}", ex.getMessage());
+        return ResponseUtil.error("Unsupported Media Type", ex.getMessage(),
+                org.springframework.http.HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                request.getRequestURI());
+    }
+
+    /**
+     * Handles MethodArgumentTypeMismatchException
+     * (e.g., failed to convert path variable to expected type).
+     *
+     * @param ex the exception
+     * @param request the web request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        LOGGER.warn("Method argument type mismatch: {}", ex.getMessage());
+        String errorMessage = String.format(
+                "Invalid parameter '%s': Value '%s' could not be converted to type %s.",
+                ex.getName(), ex.getValue(),
+                ex.getRequiredType() != null
+                        ? ex.getRequiredType().getSimpleName() : "unknown");
+        return ResponseUtil.badRequest(errorMessage, request.getRequestURI());
     }
 
     /**
