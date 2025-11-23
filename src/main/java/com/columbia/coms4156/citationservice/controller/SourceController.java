@@ -2,11 +2,13 @@ package com.columbia.coms4156.citationservice.controller;
 
 import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
+import com.columbia.coms4156.citationservice.exception.ValidationException;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.model.Article;
-import com.columbia.coms4156.citationservice.model.ErrorResponse;
 import com.columbia.coms4156.citationservice.service.SourceService;
+import com.columbia.coms4156.citationservice.utils.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Optional;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -46,6 +47,20 @@ public class SourceController {
   @Autowired
   private SourceService sourceService;
 
+  /**
+   * Validates that an ID is not null and is positive.
+   *
+   * @param id the ID to validate
+   * @param resourceName the name of the resource (e.g., "Book", "Video")
+   * @throws ValidationException if the ID is invalid
+   */
+  private void validateId(Long id, String resourceName) {
+    if (id == null || id <= 0) {
+      throw new ValidationException(
+          resourceName + " ID must be a positive integer. Provided ID: " + id);
+    }
+  }
+
   // Book Endpoints
   /**
    * Create a new book citation source in the database.
@@ -56,29 +71,15 @@ public class SourceController {
    *         or HTTP 500 if an error occurs
    */
   @PostMapping("/book")
-  public ResponseEntity<?> createBook(@Valid @RequestBody Book book, HttpServletRequest request) {
-    try {
-      if (book == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Book Data",
-            "Request body cannot be null. Please provide book information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      Book savedBook = sourceService.saveBook(book);
-      return new ResponseEntity<>(savedBook, HttpStatus.CREATED);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Book Creation Error",
-          "An unexpected error occurred while creating the book: " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> createBook(@Valid @RequestBody Book book,
+                                       HttpServletRequest request) {
+    if (book == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide book information.");
     }
+
+    Book savedBook = sourceService.saveBook(book);
+    return ResponseUtil.created(savedBook);
   }
 
   /**
@@ -90,18 +91,8 @@ public class SourceController {
    */
   @GetMapping("/book")
   public ResponseEntity<?> getAllBooks(HttpServletRequest request) {
-    try {
-      List<Book> books = sourceService.getAllBooks();
-      return new ResponseEntity<>(books, HttpStatus.OK);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Database Error",
-          "An unexpected error occurred while retrieving books: " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    List<Book> books = sourceService.getAllBooks();
+    return ResponseUtil.ok(books);
   }
 
   /**
@@ -114,39 +105,12 @@ public class SourceController {
    */
   @GetMapping("/book/{id}")
   public ResponseEntity<?> getBookById(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Book ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Book");
 
-      Optional<Book> book = sourceService.findBookById(id);
-      if (book.isPresent()) {
-        return new ResponseEntity<>(book.get(), HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Book Not Found",
-            "No book found with ID: " + id + ". Please verify the book ID and try again.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Database Error",
-          "An unexpected error occurred while retrieving book with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    Book book = sourceService.findBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No book found with ID: " + id + ". Please verify the book ID and try again."));
+    return ResponseUtil.ok(book);
   }
 
   /**
@@ -162,49 +126,18 @@ public class SourceController {
   public ResponseEntity<?> updateBook(@PathVariable Long id,
                                         @Valid @RequestBody Book book,
                                         HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Book ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      if (book == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Book Data",
-            "Request body cannot be null. Please provide book information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      Book updatedBook = sourceService.updateBook(id, book);
-      if (updatedBook != null) {
-        return new ResponseEntity<>(updatedBook, HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Book Not Found",
-            "No book found with ID: " + id + ". Cannot update non-existent book.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Book Update Error",
-          "An unexpected error occurred while updating book with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    validateId(id, "Book");
+    if (book == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide book information.");
     }
+
+    Book updatedBook = sourceService.updateBook(id, book);
+    if (updatedBook == null) {
+      throw new ResourceNotFoundException(
+          "No book found with ID: " + id + ". Cannot update non-existent book.");
+    }
+    return ResponseUtil.ok(updatedBook);
   }
 
   /**
@@ -217,40 +150,13 @@ public class SourceController {
    */
   @DeleteMapping("/book/{id}")
   public ResponseEntity<?> deleteBook(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Book ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Book");
 
-      Optional<Book> book = sourceService.findBookById(id);
-      if (book.isPresent()) {
-        sourceService.deleteBook(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Book Not Found",
-            "No book found with ID: " + id + ". Cannot delete non-existent book.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Book Deletion Error",
-          "An unexpected error occurred while deleting book with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    sourceService.findBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No book found with ID: " + id + ". Cannot delete non-existent book."));
+    sourceService.deleteBook(id);
+    return ResponseUtil.noContent();
   }
 
   // --- Video Endpoints ---
@@ -265,28 +171,13 @@ public class SourceController {
   @PostMapping("/video")
   public ResponseEntity<?> createVideo(@Valid @RequestBody Video video,
                                         HttpServletRequest request) {
-    try {
-      if (video == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Video Data",
-            "Request body cannot be null. Please provide video information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      Video savedVideo = sourceService.saveVideo(video);
-      return new ResponseEntity<>(savedVideo, HttpStatus.CREATED);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Video Creation Error",
-          "An unexpected error occurred while creating the video: " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    if (video == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide video information.");
     }
+
+    Video savedVideo = sourceService.saveVideo(video);
+    return ResponseUtil.created(savedVideo);
   }
 
   /**
@@ -298,18 +189,8 @@ public class SourceController {
    */
   @GetMapping("/video")
   public ResponseEntity<?> getAllVideos(HttpServletRequest request) {
-    try {
-      List<Video> videos = sourceService.getAllVideos();
-      return new ResponseEntity<>(videos, HttpStatus.OK);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Database Error",
-          "An unexpected error occurred while retrieving videos: " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    List<Video> videos = sourceService.getAllVideos();
+    return ResponseUtil.ok(videos);
   }
 
   /**
@@ -322,39 +203,12 @@ public class SourceController {
    */
   @GetMapping("/video/{id}")
   public ResponseEntity<?> getVideoById(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Video ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Video");
 
-      Optional<Video> video = sourceService.findVideoById(id);
-      if (video.isPresent()) {
-        return new ResponseEntity<>(video.get(), HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Video Not Found",
-            "No video found with ID: " + id + ". Please verify the video ID and try again.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Database Error",
-          "An unexpected error occurred while retrieving video with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    Video video = sourceService.findVideoById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No video found with ID: " + id + ". Please verify the video ID and try again."));
+    return ResponseUtil.ok(video);
   }
 
   /**
@@ -370,49 +224,18 @@ public class SourceController {
   public ResponseEntity<?> updateVideo(@PathVariable Long id,
                                       @Valid @RequestBody Video video,
                                       HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Video ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      if (video == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Video Data",
-            "Request body cannot be null. Please provide video information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      Video updatedVideo = sourceService.updateVideo(id, video);
-      if (updatedVideo != null) {
-        return new ResponseEntity<>(updatedVideo, HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Video Not Found",
-            "No video found with ID: " + id + ". Cannot update non-existent video.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Video Update Error",
-          "An unexpected error occurred while updating video with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    validateId(id, "Video");
+    if (video == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide video information.");
     }
+
+    Video updatedVideo = sourceService.updateVideo(id, video);
+    if (updatedVideo == null) {
+      throw new ResourceNotFoundException(
+          "No video found with ID: " + id + ". Cannot update non-existent video.");
+    }
+    return ResponseUtil.ok(updatedVideo);
   }
 
   /**
@@ -425,40 +248,13 @@ public class SourceController {
    */
   @DeleteMapping("/video/{id}")
   public ResponseEntity<?> deleteVideo(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Video ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Video");
 
-      Optional<Video> video = sourceService.findVideoById(id);
-      if (video.isPresent()) {
-        sourceService.deleteVideo(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Video Not Found",
-            "No video found with ID: " + id + ". Cannot delete non-existent video.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Video Deletion Error",
-          "An unexpected error occurred while deleting video with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    sourceService.findVideoById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No video found with ID: " + id + ". Cannot delete non-existent video."));
+    sourceService.deleteVideo(id);
+    return ResponseUtil.noContent();
   }
 
   // --- Article Endpoints ---
@@ -473,28 +269,13 @@ public class SourceController {
   @PostMapping("/article")
   public ResponseEntity<?> createArticle(@Valid @RequestBody Article article,
                                          HttpServletRequest request) {
-    try {
-      if (article == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Article Data",
-            "Request body cannot be null. Please provide article information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      Article savedArticle = sourceService.saveArticle(article);
-      return new ResponseEntity<>(savedArticle, HttpStatus.CREATED);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Article Creation Error",
-          "An unexpected error occurred while creating the article: " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    if (article == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide article information.");
     }
+
+    Article savedArticle = sourceService.saveArticle(article);
+    return ResponseUtil.created(savedArticle);
   }
 
   /**
@@ -506,18 +287,8 @@ public class SourceController {
    */
   @GetMapping("/article")
   public ResponseEntity<?> getAllArticles(HttpServletRequest request) {
-    try {
-      List<Article> articles = sourceService.getAllArticles();
-      return new ResponseEntity<>(articles, HttpStatus.OK);
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Database Error",
-          "An unexpected error occurred while retrieving articles: " + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    List<Article> articles = sourceService.getAllArticles();
+    return ResponseUtil.ok(articles);
   }
 
   /**
@@ -530,39 +301,12 @@ public class SourceController {
    */
   @GetMapping("/article/{id}")
   public ResponseEntity<?> getArticleById(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Article ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Article");
 
-      Optional<Article> article = sourceService.findArticleById(id);
-      if (article.isPresent()) {
-        return new ResponseEntity<>(article.get(), HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Article Not Found",
-            "No article found with ID: " + id + ". Please verify the article ID and try again.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Database Error",
-          "An unexpected error occurred while retrieving article with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    Article article = sourceService.findArticleById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No article found with ID: " + id + ". Please verify the article ID and try again."));
+    return ResponseUtil.ok(article);
   }
 
   /**
@@ -578,49 +322,18 @@ public class SourceController {
   public ResponseEntity<?> updateArticle(@PathVariable Long id,
                                         @Valid @RequestBody Article article,
                                         HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Article ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      if (article == null) {
-        ErrorResponse error = new ErrorResponse(
-            "Missing Article Data",
-            "Request body cannot be null. Please provide article information.",
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
-
-      Article updatedArticle = sourceService.updateArticle(id, article);
-      if (updatedArticle != null) {
-        return new ResponseEntity<>(updatedArticle, HttpStatus.OK);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Article Not Found",
-            "No article found with ID: " + id + ". Cannot update non-existent article.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Article Update Error",
-          "An unexpected error occurred while updating article with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    validateId(id, "Article");
+    if (article == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide article information.");
     }
+
+    Article updatedArticle = sourceService.updateArticle(id, article);
+    if (updatedArticle == null) {
+      throw new ResourceNotFoundException(
+          "No article found with ID: " + id + ". Cannot update non-existent article.");
+    }
+    return ResponseUtil.ok(updatedArticle);
   }
 
   /**
@@ -633,40 +346,13 @@ public class SourceController {
    */
   @DeleteMapping("/article/{id}")
   public ResponseEntity<?> deleteArticle(@PathVariable Long id, HttpServletRequest request) {
-    try {
-      if (id == null || id <= 0) {
-        ErrorResponse error = new ErrorResponse(
-            "Invalid ID",
-            "Article ID must be a positive integer. Provided ID: " + id,
-            HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-      }
+    validateId(id, "Article");
 
-      Optional<Article> article = sourceService.findArticleById(id);
-      if (article.isPresent()) {
-        sourceService.deleteArticle(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-      } else {
-        ErrorResponse error = new ErrorResponse(
-            "Article Not Found",
-            "No article found with ID: " + id + ". Cannot delete non-existent article.",
-            HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI()
-        );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      ErrorResponse error = new ErrorResponse(
-          "Article Deletion Error",
-          "An unexpected error occurred while deleting article with ID " + id + ": "
-              + e.getMessage(),
-          HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          request.getRequestURI()
-      );
-      return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    sourceService.findArticleById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No article found with ID: " + id + ". Cannot delete non-existent article."));
+    sourceService.deleteArticle(id);
+    return ResponseUtil.noContent();
   }
 
   // Batch endpoint: accepts multiple sources and optional submissionId
@@ -682,30 +368,15 @@ public class SourceController {
   public ResponseEntity<SourceBatchResponse> addSources(
       @RequestBody BulkSourceRequest request,
       @RequestParam(value = "submissionId", required = false) Long submissionId) {
-    try {
-      // return 400 Bad Request when the request has no sources
-      if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
-        SourceBatchResponse resp = new SourceBatchResponse();
-        resp.setSubmissionId(submissionId);
-        resp.setSourceIds(new ArrayList<>());
-        resp.setErrors(Arrays.asList("No sources provided in request"));
-        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
-      }
-      SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
-      return new ResponseEntity<>(resp, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
+    // return 400 Bad Request when the request has no sources
+    if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
       SourceBatchResponse resp = new SourceBatchResponse();
       resp.setSubmissionId(submissionId);
       resp.setSourceIds(new ArrayList<>());
-      resp.setErrors(Arrays.asList(e.getMessage() == null ? "Resource not found" : e.getMessage()));
-      return new ResponseEntity<>(resp, HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      SourceBatchResponse resp = new SourceBatchResponse();
-      resp.setSubmissionId(submissionId);
-      resp.setSourceIds(new ArrayList<>());
-      resp.setErrors(Arrays.asList("Internal server error: " + (e.getMessage() == null
-              ? "unexpected error" : e.getMessage())));
-      return new ResponseEntity<>(resp, HttpStatus.INTERNAL_SERVER_ERROR);
+      resp.setErrors(Arrays.asList("No sources provided in request"));
+      return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
+    SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+    return ResponseUtil.ok(resp);
   }
 }

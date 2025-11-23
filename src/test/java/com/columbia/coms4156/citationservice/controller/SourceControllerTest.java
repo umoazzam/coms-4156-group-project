@@ -4,6 +4,7 @@ import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
 import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
 import com.columbia.coms4156.citationservice.controller.dto.UserDTO;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.service.SourceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +25,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
 @WebMvcTest(SourceController.class)
 class SourceControllerTest {
 
@@ -35,6 +38,49 @@ class SourceControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    @DisplayName("GET /api/source/book/{id} returns 400 for type mismatch (invalid ID)")
+    void getBookById_TypeMismatch() throws Exception {
+        mockMvc.perform(get("/api/source/book/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(
+                        "Invalid parameter 'id': Value 'abc' could not be converted to type Long."));
+    }
+
+    @Test
+    @DisplayName("POST /api/source/book returns 400 for malformed JSON")
+    void createBook_MalformedJSON() throws Exception {
+        String malformedJson = "{\"title\": \"The Great Gatsby\", \"author\": \"F. Scott Fitzgerald\""; // Missing closing brace
+
+        mockMvc.perform(post("/api/source/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(malformedJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Malformed JSON request")));
+    }
+
+    @Test
+    @DisplayName("POST /api/source/book/{id} returns 405 Method Not Allowed")
+    void updateBook_MethodNotAllowed() throws Exception {
+        mockMvc.perform(post("/api/source/book/1"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.error").value("Method Not Allowed"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Request method 'POST' is not supported")));
+    }
+
+    @Test
+    @DisplayName("POST /api/source/book returns 415 Unsupported Media Type")
+    void createBook_UnsupportedMediaType() throws Exception {
+        mockMvc.perform(post("/api/source/book")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("Some text content"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.error").value("Unsupported Media Type"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Content-Type 'text/plain;charset=UTF-8' is not supported")));
+    }
 
     @Test
     @DisplayName("POST /api/source/sources creates a new submission and returns source ids")
@@ -104,9 +150,9 @@ class SourceControllerTest {
         request.setUser(new UserDTO());
         request.setSources(Arrays.asList(new SourceDTO()));
 
-        // service throws IllegalArgumentException which controller maps to 404
+        // service throws ResourceNotFoundException which controller maps to 404
         given(sourceService.addOrAppendSources(any(BulkSourceRequest.class), eq(999L)))
-                .willThrow(new IllegalArgumentException("submissionId not found: 999"));
+                .willThrow(new ResourceNotFoundException("submissionId not found: 999"));
 
         mockMvc.perform(post("/api/source/sources?submissionId=999")
                         .contentType(MediaType.APPLICATION_JSON)
