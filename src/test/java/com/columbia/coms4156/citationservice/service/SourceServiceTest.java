@@ -347,5 +347,189 @@ class SourceServiceTest {
         verify(videoRepository, never()).save(any(Video.class));
         verify(citationRepository, times(1)).save(any(Citation.class));
     }
+
+    @Test
+    void testUpdateBookNotFound() {
+        Long id = 999L;
+        Book updatedBook = new Book();
+        updatedBook.setTitle("New Title");
+
+        when(bookRepository.findById(id)).thenReturn(Optional.empty());
+
+        Book result = sourceService.updateBook(id, updatedBook);
+        assertEquals(null, result);
+    }
+
+    @Test
+    void testUpdateVideoNotFound() {
+        Long id = 999L;
+        Video updatedVideo = new Video();
+        updatedVideo.setTitle("New Title");
+
+        when(videoRepository.findById(id)).thenReturn(Optional.empty());
+
+        Video result = sourceService.updateVideo(id, updatedVideo);
+        assertEquals(null, result);
+    }
+
+    @Test
+    void testUpdateArticleNotFound() {
+        Long id = 999L;
+        Article updatedArticle = new Article();
+        updatedArticle.setTitle("New Title");
+
+        when(articleRepository.findById(id)).thenReturn(Optional.empty());
+
+        Article result = sourceService.updateArticle(id, updatedArticle);
+        assertEquals(null, result);
+    }
+
+    @Test
+    void testAddOrAppendSourcesWithNullRequest() {
+        var response = sourceService.addOrAppendSources(null, null);
+        assertEquals(null, response.getSubmissionId());
+        assertTrue(response.getSourceIds().isEmpty());
+    }
+
+    @Test
+    void testAddOrAppendSourcesWithNullSources() {
+        BulkSourceRequest request = new BulkSourceRequest();
+        request.setSources(null);
+
+        var response = sourceService.addOrAppendSources(request, null);
+        assertEquals(null, response.getSubmissionId());
+        assertTrue(response.getSourceIds().isEmpty());
+    }
+
+    @Test
+    void testAddOrAppendSourcesWithExistingCitation() {
+        SourceDTO sourceDTO = new SourceDTO();
+        sourceDTO.setMediaType("book");
+        sourceDTO.setTitle("Test Book");
+        sourceDTO.setAuthor("Test Author");
+
+        BulkSourceRequest request = new BulkSourceRequest();
+        request.setSources(Collections.singletonList(sourceDTO));
+
+        Submission submission = new Submission();
+        submission.setId(1L);
+
+        Book book = new Book();
+        book.setId(1L);
+        book.setTitle("Test Book");
+        book.setAuthor("Test Author");
+
+        Citation existingCitation = new Citation();
+        existingCitation.setId(99L);
+
+        when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
+        when(bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString())).thenReturn(Optional.of(book));
+        when(citationRepository.findBySubmissionIdAndMediaIdAndMediaType(1L, 1L, "book")).thenReturn(Optional.of(existingCitation));
+
+        var response = sourceService.addOrAppendSources(request, null);
+
+        assertEquals(1L, response.getSubmissionId());
+        assertEquals(1, response.getSourceIds().size());
+        assertEquals("99", response.getSourceIds().get(0));
+
+        verify(citationRepository, never()).save(any(Citation.class));
+    }
+
+    @Test
+    void testAddOrAppendSourcesWithUser() {
+        SourceDTO sourceDTO = new SourceDTO();
+        sourceDTO.setMediaType("book");
+        sourceDTO.setTitle("Test Book");
+        sourceDTO.setAuthor("Test Author");
+
+        BulkSourceRequest request = new BulkSourceRequest();
+        request.setSources(Collections.singletonList(sourceDTO));
+        UserDTO user = new UserDTO();
+        user.setUsername("testuser");
+        request.setUser(user);
+
+        Submission submission = new Submission();
+        submission.setId(1L);
+
+        User userEntity = new User();
+        userEntity.setUsername("testuser");
+
+        Book book = new Book();
+        book.setId(1L);
+
+        Citation citation = new Citation();
+        citation.setId(1L);
+
+        when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(userEntity));
+        when(bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString())).thenReturn(Optional.empty());
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(citationRepository.save(any(Citation.class))).thenReturn(citation);
+
+        var response = sourceService.addOrAppendSources(request, null);
+
+        assertEquals(1L, response.getSubmissionId());
+        assertEquals(1, response.getSourceIds().size());
+    }
+
+    @Test
+    void testAddOrAppendSourcesWithArticle() {
+        SourceDTO sourceDTO = new SourceDTO();
+        sourceDTO.setMediaType("article");
+        sourceDTO.setTitle("Test Article");
+        sourceDTO.setAuthor("Test Author");
+
+        BulkSourceRequest request = new BulkSourceRequest();
+        request.setSources(Collections.singletonList(sourceDTO));
+
+        Submission submission = new Submission();
+        submission.setId(1L);
+
+        Article article = new Article();
+        article.setId(1L);
+
+        Citation citation = new Citation();
+        citation.setId(1L);
+
+        when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
+        when(articleRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString())).thenReturn(Optional.empty());
+        when(articleRepository.save(any(Article.class))).thenReturn(article);
+        when(citationRepository.save(any(Citation.class))).thenReturn(citation);
+
+        var response = sourceService.addOrAppendSources(request, null);
+
+        assertEquals(1L, response.getSubmissionId());
+        assertEquals(1, response.getSourceIds().size());
+    }
+
+    @Test
+    void testAddOrAppendSourcesWithVideo() {
+        SourceDTO sourceDTO = new SourceDTO();
+        sourceDTO.setMediaType("video");
+        sourceDTO.setTitle("Test Video");
+        sourceDTO.setAuthor("Test Author");
+
+        BulkSourceRequest request = new BulkSourceRequest();
+        request.setSources(Collections.singletonList(sourceDTO));
+
+        Submission submission = new Submission();
+        submission.setId(1L);
+
+        Video video = new Video();
+        video.setId(1L);
+
+        Citation citation = new Citation();
+        citation.setId(1L);
+
+        when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
+        when(videoRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString())).thenReturn(Optional.empty());
+        when(videoRepository.save(any(Video.class))).thenReturn(video);
+        when(citationRepository.save(any(Citation.class))).thenReturn(citation);
+
+        var response = sourceService.addOrAppendSources(request, null);
+
+        assertEquals(1L, response.getSubmissionId());
+        assertEquals(1, response.getSourceIds().size());
+    }
 }
 
