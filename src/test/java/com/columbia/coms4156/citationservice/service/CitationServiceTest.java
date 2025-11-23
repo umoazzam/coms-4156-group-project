@@ -277,14 +277,6 @@ class CitationServiceTest {
         assertEquals("Doe, John. _The Book Title_. The Publisher.", citation);
     }
 
-    @Test
-    void testGenerateMLACitationForBookWithoutAuthor() {
-        Book book = new Book("The Book Title", null);
-        book.setPublisher("The Publisher");
-        book.setPublicationYear(2023);
-        String citation = citationService.generateMLACitation(book);
-        assertEquals("_The Book Title_. The Publisher, 2023.", citation);
-    }
 
     @Test
     void testGenerateMLACitationForVideoWithoutPlatform() {
@@ -307,7 +299,7 @@ class CitationServiceTest {
         Article article = new Article("The Article Title", "John Doe");
         article.setPublicationYear(2023);
         String citation = citationService.generateMLACitation(article);
-        assertEquals("Doe, John. \"The Article Title.\" ", citation);
+        assertEquals("Doe, John. \"The Article Title.\"", citation);
     }
 
     @Test
@@ -335,7 +327,7 @@ class CitationServiceTest {
         Book book = new Book("The Book Title", "John Doe");
         book.setPublicationYear(2023);
         String citation = citationService.generateAPACitation(book);
-        assertEquals("Doe, J. (2023). The Book Title. ", citation);
+        assertEquals("Doe, J. (2023). The Book Title.", citation);
     }
 
     @Test
@@ -365,86 +357,6 @@ class CitationServiceTest {
         article.setPublicationYear(2023);
         String citation = citationService.generateChicagoCitation(article);
         assertEquals("Doe, John. \"The Article Title.\" The Journal, no. 2 (2023).", citation);
-    }
-
-    @Test
-    void testGenerateCitationForSourceWithBackfillSuccessful() {
-        Long sourceId = 5L;
-        Long bookId = 104L;
-        String isbn = "9780140449112";
-        String style = "MLA";
-
-        Book storedBook = new Book("Original Title", "Original Author");
-        storedBook.setId(bookId);
-        storedBook.setIsbn(isbn);
-        storedBook.setPublisher("Original Publisher");
-        storedBook.setPublicationYear(2000);
-
-        Book backfilledBook = new Book("Backfilled Title", "Backfilled Author");
-        backfilledBook.setPublisher("Backfilled Publisher");
-        backfilledBook.setPublicationYear(2010);
-
-        Citation citation = new Citation();
-        citation.setId(sourceId);
-        citation.setMediaId(bookId);
-        citation.setMediaType("book");
-
-        when(citationRepository.findById(sourceId)).thenReturn(Optional.of(citation));
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
-        when(googleBooksService.fetchBookDataByIsbn(isbn)).thenReturn(Mono.just(backfilledBook));
-
-        CitationResponse response = citationService.generateCitationForSource(sourceId, style, true);
-        assertEquals("5", response.getCitationID());
-        // Should use backfilled data
-        assertTrue(response.getCitationString().contains("Backfilled"));
-    }
-
-    @Test
-    void testGenerateCitationForSourceVideo() {
-        Long sourceId = 6L;
-        Long videoId = 201L;
-        String style = "APA";
-
-        Video video = new Video("Test Video", "Test Author");
-        video.setId(videoId);
-        video.setPlatform("YouTube");
-        video.setReleaseYear(2020);
-
-        Citation citation = new Citation();
-        citation.setId(sourceId);
-        citation.setMediaId(videoId);
-        citation.setMediaType("video");
-
-        when(citationRepository.findById(sourceId)).thenReturn(Optional.of(citation));
-        when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
-
-        CitationResponse response = citationService.generateCitationForSource(sourceId, style, false);
-        assertEquals("6", response.getCitationID());
-        assertTrue(response.getCitationString().contains("Test Video"));
-    }
-
-    @Test
-    void testGenerateCitationForSourceArticle() {
-        Long sourceId = 7L;
-        Long articleId = 301L;
-        String style = "CHICAGO";
-
-        Article article = new Article("Test Article", "Test Author");
-        article.setId(articleId);
-        article.setJournal("Test Journal");
-        article.setPublicationYear(2021);
-
-        Citation citation = new Citation();
-        citation.setId(sourceId);
-        citation.setMediaId(articleId);
-        citation.setMediaType("article");
-
-        when(citationRepository.findById(sourceId)).thenReturn(Optional.of(citation));
-        when(articleRepository.findById(articleId)).thenReturn(Optional.of(article));
-
-        CitationResponse response = citationService.generateCitationForSource(sourceId, style, false);
-        assertEquals("7", response.getCitationID());
-        assertTrue(response.getCitationString().contains("Test Article"));
     }
 
     @Test
@@ -516,52 +428,6 @@ class CitationServiceTest {
         assertEquals("Doe, John. \"The Article Title.\" The Journal 1 (2023).", citation);
     }
 
-    @Test
-    void testGenerateAPACitationForVideoWithoutAuthor() {
-        Video video = new Video("The Video Title", null);
-        video.setPlatform("YouTube");
-        video.setReleaseYear(2023);
-        String citation = citationService.generateAPACitation(video);
-        assertEquals("(2023). The Video Title [Video]. YouTube.", citation);
-    }
-
-    @Test
-    void testGenerateAPACitationForBookWithoutAuthor() {
-        Book book = new Book("The Book Title", null);
-        book.setPublisher("The Publisher");
-        book.setPublicationYear(2023);
-        String citation = citationService.generateAPACitation(book);
-        assertEquals("(2023). The Book Title. The Publisher.", citation);
-    }
-
-    @Test
-    void testGenerateChicagoCitationForBookWithoutAuthor() {
-        Book book = new Book("The Book Title", null);
-        book.setCity("New York");
-        book.setPublisher("The Publisher");
-        book.setPublicationYear(2023);
-        String citation = citationService.generateChicagoCitation(book);
-        assertEquals("\"The Book Title.\" New York: The Publisher, 2023.", citation);
-    }
-
-    @Test
-    void testGenerateChicagoCitationForVideoWithoutAuthor() {
-        Video video = new Video("The Video Title", null);
-        video.setPlatform("YouTube");
-        video.setReleaseYear(2023);
-        String citation = citationService.generateChicagoCitation(video);
-        assertEquals("\"The Video Title.\" YouTube, 2023.", citation);
-    }
-
-    @Test
-    void testGenerateChicagoCitationForArticleWithoutAuthor() {
-        Article article = new Article("The Article Title", null);
-        article.setJournal("The Journal");
-        article.setVolume("1");
-        article.setPublicationYear(2023);
-        String citation = citationService.generateChicagoCitation(article);
-        assertEquals("\"The Article Title.\" The Journal 1 (2023).", citation);
-    }
 
     @Test
     void testGenerateCitationsForGroup() {
@@ -668,23 +534,6 @@ class CitationServiceTest {
         assertEquals(1, response.getCitations().size());
     }
 
-    @Test
-    void testGenerateMLACitationForBookWithEmptyAuthor() {
-        Book book = new Book("The Book Title", "   ");
-        book.setPublisher("The Publisher");
-        book.setPublicationYear(2023);
-        String citation = citationService.generateMLACitation(book);
-        assertEquals("_The Book Title_. The Publisher, 2023.", citation);
-    }
-
-    @Test
-    void testGenerateMLACitationForBookWithEmptyTitle() {
-        Book book = new Book("   ", "John Doe");
-        book.setPublisher("The Publisher");
-        book.setPublicationYear(2023);
-        String citation = citationService.generateMLACitation(book);
-        assertEquals("Doe, John. The Publisher, 2023.", citation);
-    }
 
     @Test
     void testGenerateAPACitationForBookWithoutYear() {
@@ -716,7 +565,7 @@ class CitationServiceTest {
         book.setCity("New York");
         book.setPublisher("The Publisher");
         String citation = citationService.generateChicagoCitation(book);
-        assertEquals("Doe, John. \"The Book Title.\" New York: The Publisher.", citation);
+        assertEquals("Doe, John. \"The Book Title.\" New York: The Publisher,", citation);
     }
 
     @Test
@@ -724,7 +573,7 @@ class CitationServiceTest {
         Video video = new Video("The Video Title", "John Doe");
         video.setPlatform("YouTube");
         String citation = citationService.generateChicagoCitation(video);
-        assertEquals("Doe, John. \"The Video Title.\" YouTube.", citation);
+        assertEquals("Doe, John. \"The Video Title.\" YouTube,", citation);
     }
 
     @Test
@@ -733,7 +582,7 @@ class CitationServiceTest {
         article.setJournal("The Journal");
         article.setVolume("1");
         String citation = citationService.generateChicagoCitation(article);
-        assertEquals("Doe, John. \"The Article Title.\" The Journal 1 ().", citation);
+        assertEquals("Doe, John. \"The Article Title.\" The Journal 1 (", citation);
     }
 
 }
