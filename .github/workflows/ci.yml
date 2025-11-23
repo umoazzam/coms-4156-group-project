@@ -28,7 +28,7 @@ jobs:
       run: mvn clean compile
       
     - name: Run tests with coverage
-      run: mvn test jacoco:report jacoco:check
+      run: mvn verify
       env:
         # Use H2 in-memory database for tests (default in application.properties)
         DB_URL: jdbc:h2:mem:testdb
