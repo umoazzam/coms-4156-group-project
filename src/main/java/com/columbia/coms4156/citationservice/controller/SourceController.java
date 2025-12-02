@@ -2,10 +2,13 @@ package com.columbia.coms4156.citationservice.controller;
 
 import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
+import com.columbia.coms4156.citationservice.exception.ValidationException;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.service.SourceService;
+import com.columbia.coms4156.citationservice.utils.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * REST Controller for Source management API endpoints.
@@ -42,52 +47,70 @@ public class SourceController {
   @Autowired
   private SourceService sourceService;
 
+  /**
+   * Validates that an ID is not null and is positive.
+   *
+   * @param id the ID to validate
+   * @param resourceName the name of the resource (e.g., "Book", "Video")
+   * @throws ValidationException if the ID is invalid
+   */
+  private void validateId(Long id, String resourceName) {
+    if (id == null || id <= 0) {
+      throw new ValidationException(
+          resourceName + " ID must be a positive integer. Provided ID: " + id);
+    }
+  }
+
   // Book Endpoints
   /**
    * Create a new book citation source in the database.
    *
    * @param book The book entity to create
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the created book with HTTP 201 status if successful,
    *         or HTTP 500 if an error occurs
    */
   @PostMapping("/book")
-  public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
-    try {
-      Book savedBook = sourceService.saveBook(book);
-      return new ResponseEntity<>(savedBook, HttpStatus.CREATED);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> createBook(@Valid @RequestBody Book book,
+                                       HttpServletRequest request) {
+    if (book == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide book information.");
     }
+
+    Book savedBook = sourceService.saveBook(book);
+    return ResponseUtil.created(savedBook);
   }
 
   /**
    * Retrieve all book citation sources from the database.
    *
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing a list of all books with HTTP 200 status,
    *         or HTTP 500 if an error occurs
    */
   @GetMapping("/book")
-  public ResponseEntity<List<Book>> getAllBooks() {
-    try {
-      List<Book> books = sourceService.getAllBooks();
-      return new ResponseEntity<>(books, HttpStatus.OK);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public ResponseEntity<?> getAllBooks(HttpServletRequest request) {
+    List<Book> books = sourceService.getAllBooks();
+    return ResponseUtil.ok(books);
   }
 
   /**
    * Retrieve a specific book citation source by its unique identifier.
    *
    * @param id The unique identifier of the book to retrieve
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the book with HTTP 200 status if found,
    *         or HTTP 404 if the book doesn't exist
    */
   @GetMapping("/book/{id}")
-  public ResponseEntity<Book> getBookById(@PathVariable Long id) {
-    Optional<Book> book = sourceService.findBookById(id);
-    return book.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  public ResponseEntity<?> getBookById(@PathVariable Long id, HttpServletRequest request) {
+    validateId(id, "Book");
+
+    Book book = sourceService.findBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No book found with ID: " + id + ". Please verify the book ID and try again."));
+    return ResponseUtil.ok(book);
   }
 
   /**
@@ -95,44 +118,45 @@ public class SourceController {
    *
    * @param id The unique identifier of the book to update
    * @param book The book entity containing updated information
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the updated book with HTTP 200 status if successful,
    *         HTTP 404 if the book doesn't exist, or HTTP 500 if an error occurs
    */
   @PutMapping("/book/{id}")
-  public ResponseEntity<Book> updateBook(@PathVariable Long id,
-                                        @Valid @RequestBody Book book) {
-    try {
-      Book updatedBook = sourceService.updateBook(id, book);
-      if (updatedBook != null) {
-        return new ResponseEntity<>(updatedBook, HttpStatus.OK);
-      } else {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> updateBook(@PathVariable Long id,
+                                        @Valid @RequestBody Book book,
+                                        HttpServletRequest request) {
+    validateId(id, "Book");
+    if (book == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide book information.");
     }
+
+    Book updatedBook = sourceService.updateBook(id, book);
+    if (updatedBook == null) {
+      throw new ResourceNotFoundException(
+          "No book found with ID: " + id + ". Cannot update non-existent book.");
+    }
+    return ResponseUtil.ok(updatedBook);
   }
 
   /**
    * Delete a book citation source from the database.
    *
    * @param id The unique identifier of the book to delete
+   * @param request The HTTP request object for error context
    * @return ResponseEntity with HTTP 204 status if successfully deleted,
    *         HTTP 404 if the book doesn't exist, or HTTP 500 if an error occurs
    */
   @DeleteMapping("/book/{id}")
-  public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-    try {
-      Optional<Book> book = sourceService.findBookById(id);
-      if (book.isPresent()) {
-        sourceService.deleteBook(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-      } else {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public ResponseEntity<?> deleteBook(@PathVariable Long id, HttpServletRequest request) {
+    validateId(id, "Book");
+
+    sourceService.findBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No book found with ID: " + id + ". Cannot delete non-existent book."));
+    sourceService.deleteBook(id);
+    return ResponseUtil.noContent();
   }
 
   // --- Video Endpoints ---
@@ -140,47 +164,51 @@ public class SourceController {
    * Create a new video citation source in the database.
    *
    * @param video The video entity to create
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the created video with HTTP 201 status if successful,
    *         or HTTP 500 if an error occurs
    */
   @PostMapping("/video")
-  public ResponseEntity<Video> createVideo(@Valid @RequestBody Video video) {
-    try {
-      Video saved = sourceService.saveVideo(video);
-      return new ResponseEntity<>(saved, HttpStatus.CREATED);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> createVideo(@Valid @RequestBody Video video,
+                                        HttpServletRequest request) {
+    if (video == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide video information.");
     }
+
+    Video savedVideo = sourceService.saveVideo(video);
+    return ResponseUtil.created(savedVideo);
   }
 
   /**
    * Retrieve all video citation sources from the database.
    *
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing a list of all videos with HTTP 200 status,
    *         or HTTP 500 if an error occurs
    */
   @GetMapping("/video")
-  public ResponseEntity<List<Video>> getAllVideos() {
-    try {
-      List<Video> list = sourceService.getAllVideos();
-      return new ResponseEntity<>(list, HttpStatus.OK);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public ResponseEntity<?> getAllVideos(HttpServletRequest request) {
+    List<Video> videos = sourceService.getAllVideos();
+    return ResponseUtil.ok(videos);
   }
 
   /**
    * Retrieve a specific video citation source by its unique identifier.
    *
    * @param id The unique identifier of the video to retrieve
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the video with HTTP 200 status if found,
    *         or HTTP 404 if the video doesn't exist
    */
   @GetMapping("/video/{id}")
-  public ResponseEntity<Video> getVideoById(@PathVariable Long id) {
-    Optional<Video> v = sourceService.findVideoById(id);
-    return v.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  public ResponseEntity<?> getVideoById(@PathVariable Long id, HttpServletRequest request) {
+    validateId(id, "Video");
+
+    Video video = sourceService.findVideoById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No video found with ID: " + id + ". Please verify the video ID and try again."));
+    return ResponseUtil.ok(video);
   }
 
   /**
@@ -188,42 +216,45 @@ public class SourceController {
    *
    * @param id The unique identifier of the video to update
    * @param video The video entity containing updated information
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the updated video with HTTP 200 status if successful,
    *         HTTP 404 if the video doesn't exist, or HTTP 500 if an error occurs
    */
   @PutMapping("/video/{id}")
-  public ResponseEntity<Video> updateVideo(@PathVariable Long id,
-                                          @Valid @RequestBody Video video) {
-    try {
-      Video updated = sourceService.updateVideo(id, video);
-      if (updated != null) {
-        return new ResponseEntity<>(updated, HttpStatus.OK);
-      }
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> updateVideo(@PathVariable Long id,
+                                      @Valid @RequestBody Video video,
+                                      HttpServletRequest request) {
+    validateId(id, "Video");
+    if (video == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide video information.");
     }
+
+    Video updatedVideo = sourceService.updateVideo(id, video);
+    if (updatedVideo == null) {
+      throw new ResourceNotFoundException(
+          "No video found with ID: " + id + ". Cannot update non-existent video.");
+    }
+    return ResponseUtil.ok(updatedVideo);
   }
 
   /**
    * Delete a video citation source from the database.
    *
    * @param id The unique identifier of the video to delete
+   * @param request The HTTP request object for error context
    * @return ResponseEntity with HTTP 204 status if successfully deleted,
    *         HTTP 404 if the video doesn't exist, or HTTP 500 if an error occurs
    */
   @DeleteMapping("/video/{id}")
-  public ResponseEntity<Void> deleteVideo(@PathVariable Long id) {
-    try {
-      Optional<Video> v = sourceService.findVideoById(id);
-      if (v.isPresent()) {
-        sourceService.deleteVideo(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-      }
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public ResponseEntity<?> deleteVideo(@PathVariable Long id, HttpServletRequest request) {
+    validateId(id, "Video");
+
+    sourceService.findVideoById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No video found with ID: " + id + ". Cannot delete non-existent video."));
+    sourceService.deleteVideo(id);
+    return ResponseUtil.noContent();
   }
 
   // --- Article Endpoints ---
@@ -231,47 +262,51 @@ public class SourceController {
    * Create a new article citation source in the database.
    *
    * @param article The article entity to create
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the created article with HTTP 201 status if successful,
    *         or HTTP 500 if an error occurs
    */
   @PostMapping("/article")
-  public ResponseEntity<Article> createArticle(@Valid @RequestBody Article article) {
-    try {
-      Article saved = sourceService.saveArticle(article);
-      return new ResponseEntity<>(saved, HttpStatus.CREATED);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> createArticle(@Valid @RequestBody Article article,
+                                         HttpServletRequest request) {
+    if (article == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide article information.");
     }
+
+    Article savedArticle = sourceService.saveArticle(article);
+    return ResponseUtil.created(savedArticle);
   }
 
   /**
    * Retrieve all article citation sources from the database.
    *
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing a list of all articles with HTTP 200 status,
    *         or HTTP 500 if an error occurs
    */
   @GetMapping("/article")
-  public ResponseEntity<List<Article>> getAllArticles() {
-    try {
-      List<Article> list = sourceService.getAllArticles();
-      return new ResponseEntity<>(list, HttpStatus.OK);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public ResponseEntity<?> getAllArticles(HttpServletRequest request) {
+    List<Article> articles = sourceService.getAllArticles();
+    return ResponseUtil.ok(articles);
   }
 
   /**
    * Retrieve a specific article citation source by its unique identifier.
    *
    * @param id The unique identifier of the article to retrieve
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the article with HTTP 200 status if found,
    *         or HTTP 404 if the article doesn't exist
    */
   @GetMapping("/article/{id}")
-  public ResponseEntity<Article> getArticleById(@PathVariable Long id) {
-    Optional<Article> a = sourceService.findArticleById(id);
-    return a.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  public ResponseEntity<?> getArticleById(@PathVariable Long id, HttpServletRequest request) {
+    validateId(id, "Article");
+
+    Article article = sourceService.findArticleById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No article found with ID: " + id + ". Please verify the article ID and try again."));
+    return ResponseUtil.ok(article);
   }
 
   /**
@@ -279,42 +314,45 @@ public class SourceController {
    *
    * @param id The unique identifier of the article to update
    * @param article The article entity containing updated information
+   * @param request The HTTP request object for error context
    * @return ResponseEntity containing the updated article with HTTP 200 status if successful,
    *         HTTP 404 if the article doesn't exist, or HTTP 500 if an error occurs
    */
   @PutMapping("/article/{id}")
-  public ResponseEntity<Article> updateArticle(@PathVariable Long id,
-                                              @Valid @RequestBody Article article) {
-    try {
-      Article updated = sourceService.updateArticle(id, article);
-      if (updated != null) {
-        return new ResponseEntity<>(updated, HttpStatus.OK);
-      }
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<?> updateArticle(@PathVariable Long id,
+                                        @Valid @RequestBody Article article,
+                                        HttpServletRequest request) {
+    validateId(id, "Article");
+    if (article == null) {
+      throw new ValidationException(
+          "Request body cannot be null. Please provide article information.");
     }
+
+    Article updatedArticle = sourceService.updateArticle(id, article);
+    if (updatedArticle == null) {
+      throw new ResourceNotFoundException(
+          "No article found with ID: " + id + ". Cannot update non-existent article.");
+    }
+    return ResponseUtil.ok(updatedArticle);
   }
 
   /**
    * Delete an article citation source from the database.
    *
    * @param id The unique identifier of the article to delete
+   * @param request The HTTP request object for error context
    * @return ResponseEntity with HTTP 204 status if successfully deleted,
    *         HTTP 404 if the article doesn't exist, or HTTP 500 if an error occurs
    */
   @DeleteMapping("/article/{id}")
-  public ResponseEntity<Void> deleteArticle(@PathVariable Long id) {
-    try {
-      Optional<Article> a = sourceService.findArticleById(id);
-      if (a.isPresent()) {
-        sourceService.deleteArticle(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-      }
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public ResponseEntity<?> deleteArticle(@PathVariable Long id, HttpServletRequest request) {
+    validateId(id, "Article");
+
+    sourceService.findArticleById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No article found with ID: " + id + ". Cannot delete non-existent article."));
+    sourceService.deleteArticle(id);
+    return ResponseUtil.noContent();
   }
 
   // Batch endpoint: accepts multiple sources and optional submissionId
@@ -330,13 +368,15 @@ public class SourceController {
   public ResponseEntity<SourceBatchResponse> addSources(
       @RequestBody BulkSourceRequest request,
       @RequestParam(value = "submissionId", required = false) Long submissionId) {
-    try {
-      SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
-      return new ResponseEntity<>(resp, HttpStatus.OK);
-    } catch (IllegalArgumentException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    // return 400 Bad Request when the request has no sources
+    if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
+      SourceBatchResponse resp = new SourceBatchResponse();
+      resp.setSubmissionId(submissionId);
+      resp.setSourceIds(new ArrayList<>());
+      resp.setErrors(Arrays.asList("No sources provided in request"));
+      return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
+    SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+    return ResponseUtil.ok(resp);
   }
 }

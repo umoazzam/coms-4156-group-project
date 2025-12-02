@@ -1,5 +1,6 @@
 package com.columbia.coms4156.citationservice.service;
 
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Citation;
@@ -14,6 +15,7 @@ import com.columbia.coms4156.citationservice.repository.SubmissionRepository;
 import com.columbia.coms4156.citationservice.repository.VideoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,32 +32,52 @@ public class CitationService {
     /**
      * Repository for managing Book entities.
      */
-    @Autowired
-    private BookRepository bookRepository;
-
+    private final BookRepository bookRepository;
     /**
      * Repository for managing Video entities.
      */
-    @Autowired
-    private VideoRepository videoRepository;
-
+    private final VideoRepository videoRepository;
     /**
      * Repository for managing Article entities.
      */
-    @Autowired
-    private ArticleRepository articleRepository;
-
+    private final ArticleRepository articleRepository;
     /**
      * Repository for managing Citation entities.
      */
-    @Autowired
-    private CitationRepository citationRepository;
-
+    private final CitationRepository citationRepository;
     /**
      * Repository for managing Submission entities.
      */
+    private final SubmissionRepository submissionRepository;
+    /**
+     * Service for fetching book data from Google Books API.
+     */
+    private final GoogleBooksService googleBooksService;
+
+    /**
+     * Constructs a new CitationService with the given repositories and services.
+     * @param pBookRepository the book repository
+     * @param pVideoRepository the video repository
+     * @param pArticleRepository the article repository
+     * @param pCitationRepository the citation repository
+     * @param pSubmissionRepository the submission repository
+     * @param pGoogleBooksService the google books service
+     */
     @Autowired
-    private SubmissionRepository submissionRepository;
+    public CitationService(BookRepository pBookRepository,
+                           VideoRepository pVideoRepository,
+                           ArticleRepository pArticleRepository,
+                           CitationRepository pCitationRepository,
+                           SubmissionRepository pSubmissionRepository,
+                           GoogleBooksService pGoogleBooksService) {
+        this.bookRepository = pBookRepository;
+        this.videoRepository = pVideoRepository;
+        this.articleRepository = pArticleRepository;
+        this.citationRepository = pCitationRepository;
+        this.submissionRepository = pSubmissionRepository;
+        this.googleBooksService = pGoogleBooksService;
+    }
+
 
     // CITATION GENERATION METHODS
     /**
@@ -198,6 +220,7 @@ public class CitationService {
     }
 
     /**
+     * UPDATE NEEDED FOR NEW API FLOW
      * Generate a citation for a single source by sourceId with specified style and backfill option.
      *
      * @param sourceId the ID of the source to generate citation for
@@ -211,7 +234,7 @@ public class CitationService {
         // Find the citation record
         Optional<Citation> citationOpt = citationRepository.findById(sourceId);
         if (citationOpt.isEmpty()) {
-            throw new IllegalArgumentException("Citation not found with ID: " + sourceId);
+            throw new ResourceNotFoundException("Citation not found with ID: " + sourceId);
         }
 
         Citation citation = citationOpt.get();
@@ -222,6 +245,7 @@ public class CitationService {
     }
 
     /**
+     * UPDATE NEEDED FOR NEW API FLOW
      * Generate citations for all sources in a submission group.
      *
      * @param submissionId the ID of the submission containing sources
@@ -230,11 +254,12 @@ public class CitationService {
      * @return GroupCitationResponse containing all generated citations
      * @throws IllegalArgumentException if submission not found
      */
+    @Transactional
     public GroupCitationResponse generateCitationsForGroup(Long submissionId, String style,
                                                           boolean backfill) {
         Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);
         if (submissionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Submission not found with ID: " + submissionId);
+            throw new ResourceNotFoundException("Submission not found with ID: " + submissionId);
         }
 
         Submission submission = submissionOpt.get();
@@ -263,9 +288,31 @@ public class CitationService {
                                              boolean backfill) {
         switch (mediaType.toLowerCase()) {
             case "book":
-                Optional<Book> book = bookRepository.findById(mediaId);
-                if (book.isPresent()) {
-                    return generateCitationByStyle(book.get(), style);
+                Optional<Book> bookOptional = bookRepository.findById(mediaId);
+                if (bookOptional.isPresent()) {
+                    Book book = bookOptional.get();
+                    if (backfill && book.getIsbn() != null && !book.getIsbn().isEmpty()) {
+                        Book backfilledBook = googleBooksService
+                                .fetchBookDataByIsbn(book.getIsbn()).block();
+                        if (backfilledBook != null) {
+                            // Merge data, giving precedence to the backfilled data
+                            Book mergedBook = new Book();
+                            mergedBook.setTitle(backfilledBook.getTitle() != null
+                                    ? backfilledBook.getTitle() : book.getTitle());
+                            mergedBook.setAuthor(backfilledBook.getAuthor() != null
+                                    ? backfilledBook.getAuthor() : book.getAuthor());
+                            mergedBook.setPublisher(backfilledBook.getPublisher() != null
+                                    ? backfilledBook.getPublisher() : book.getPublisher());
+                            mergedBook.setPublicationYear(
+                                    backfilledBook.getPublicationYear() != null
+                                    ? backfilledBook.getPublicationYear()
+                                            : book.getPublicationYear());
+                            mergedBook.setIsbn(book.getIsbn()); // Keep original ISBN
+                            mergedBook.setCity(book.getCity()); // Keep original city
+                            return generateCitationByStyle(mergedBook, style);
+                        }
+                    }
+                    return generateCitationByStyle(book, style);
                 }
                 break;
             case "video":
@@ -283,7 +330,7 @@ public class CitationService {
             default:
                 throw new IllegalArgumentException("Unsupported media type: " + mediaType);
         }
-        throw new IllegalArgumentException("Media not found with ID: " + mediaId);
+        throw new ResourceNotFoundException("Media not found with ID: " + mediaId);
     }
 
     /**

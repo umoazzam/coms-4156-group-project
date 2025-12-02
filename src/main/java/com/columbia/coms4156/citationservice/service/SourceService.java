@@ -3,6 +3,7 @@ package com.columbia.coms4156.citationservice.service;
 import com.columbia.coms4156.citationservice.controller.dto.BulkSourceRequest;
 import com.columbia.coms4156.citationservice.controller.dto.SourceDTO;
 import com.columbia.coms4156.citationservice.controller.dto.SourceBatchResponse;
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Citation;
@@ -307,10 +308,12 @@ public class SourceService {
     } else {
       final String msg = "submissionId not found: " + submissionId;
       submission = submissionRepository.findById(submissionId)
-          .orElseThrow(() -> new IllegalArgumentException(msg));
+          .orElseThrow(() -> new ResourceNotFoundException(msg));
     }
 
     List<String> savedCitationIds = new ArrayList<>();
+    // collect errors encountered while processing sources (e.g., unsupported media types)
+    List<String> errors = new ArrayList<>();
 
     for (SourceDTO src : request.getSources()) {
       String rawType = src.getMediaType();
@@ -340,8 +343,8 @@ public class SourceService {
             book.setIsbn(src.getIsbn());
             book.setPublisher(src.getPublisher());
             book.setPublicationYear(src.getYear());
-            book.setCity(null);
-            book.setEdition(null);
+            book.setCity(src.getCity());
+            book.setEdition(src.getEdition());
             book = bookRepository.save(book);
           }
           mediaId = book.getId();
@@ -381,11 +384,6 @@ public class SourceService {
             video.setTitle(title);
             video.setAuthor(author);
             video.setDirector(src.getDirector());
-            // convert duration if provided in mm:ss to seconds if possible
-            if (src.getDuration() != null) {
-              Integer seconds = parseDurationToSeconds(src.getDuration());
-              video.setDurationSeconds(seconds);
-            }
             video.setPlatform(src.getPlatform());
             video.setUrl(src.getUrl());
             video.setReleaseYear(src.getYear());
@@ -395,7 +393,12 @@ public class SourceService {
           break;
 
         default:
-          // unknown mediaType -> skip
+          // unknown mediaType -> record an error and skip
+          String unsupported = String.format("Unsupported mediaType '%s' for "
+                  + "source(title='%s', author='%s')", rawType, title, author);
+          errors.add(unsupported);
+          errors.add(String.format("MediaType error (book): title='%s', author="
+                  + "'%s'", title, author));
           continue;
       }
 
@@ -418,39 +421,12 @@ public class SourceService {
         savedCitationIds.add(existingCitation.get().getId().toString());
       } else {
         Citation citation = new Citation(submission, userInputJson, mediaId, type);
+        submission.addCitation(citation);
         citation = citationRepository.save(citation);
         savedCitationIds.add(citation.getId().toString());
       }
     }
 
-    return new SourceBatchResponse(submission.getId(), savedCitationIds);
-  }
-
-  /**
-   * Parses a duration string into seconds.
-   *
-   * @param duration the duration string in the format hh:mm:ss, mm:ss, or seconds
-   * @return the total duration in seconds, or null if parsing fails
-   */
-  private Integer parseDurationToSeconds(String duration) {
-    try {
-      String[] parts = duration.split(":");
-      int seconds = 0;
-      if (parts.length == DURATION_PARTS_WITH_MINUTES) {
-        int minutes = Integer.parseInt(parts[0].trim());
-        int secs = Integer.parseInt(parts[1].trim());
-        seconds = minutes * SECONDS_IN_MINUTE + secs;
-      } else if (parts.length == DURATION_PARTS_WITH_HOURS) {
-        int hours = Integer.parseInt(parts[0].trim());
-        int minutes = Integer.parseInt(parts[1].trim());
-        int secs = Integer.parseInt(parts[2].trim());
-        seconds = hours * SECONDS_IN_HOUR + minutes * SECONDS_IN_MINUTE + secs;
-      } else {
-        seconds = Integer.parseInt(duration.trim());
-      }
-      return seconds;
-    } catch (Exception e) {
-      return null;
-    }
+    return new SourceBatchResponse(submission.getId(), savedCitationIds, errors);
   }
 }
