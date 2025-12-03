@@ -53,6 +53,10 @@ public class CitationService {
      * Service for fetching book data from Google Books API.
      */
     private final GoogleBooksService googleBooksService;
+    /**
+     * Service for fetching article data from CrossRef API.
+     */
+    private final CrossRefDoiService crossRefDoiService;
 
     /**
      * Constructs a new CitationService with the given repositories and services.
@@ -61,7 +65,8 @@ public class CitationService {
      * @param pArticleRepository the article repository
      * @param pCitationRepository the citation repository
      * @param pSubmissionRepository the submission repository
-     * @param pGoogleBooksService the google books service
+     * @param pGoogleBooksService the Google books service
+     * @param pCrossRefDoiService the CrossRef DOI service
      */
     @Autowired
     public CitationService(BookRepository pBookRepository,
@@ -69,13 +74,15 @@ public class CitationService {
                            ArticleRepository pArticleRepository,
                            CitationRepository pCitationRepository,
                            SubmissionRepository pSubmissionRepository,
-                           GoogleBooksService pGoogleBooksService) {
+                           GoogleBooksService pGoogleBooksService,
+                           CrossRefDoiService pCrossRefDoiService) {
         this.bookRepository = pBookRepository;
         this.videoRepository = pVideoRepository;
         this.articleRepository = pArticleRepository;
         this.citationRepository = pCitationRepository;
         this.submissionRepository = pSubmissionRepository;
         this.googleBooksService = pGoogleBooksService;
+        this.crossRefDoiService = pCrossRefDoiService;
     }
 
 
@@ -220,32 +227,31 @@ public class CitationService {
     }
 
     /**
-     * UPDATE NEEDED FOR NEW API FLOW
-     * Generate a citation for a single source by sourceId with specified style and backfill option.
+     * Generate a citation for a single source by citationId with specified style & backfill option.
+     * This citationId must be an ID that is returned after creating a source submission.
      *
-     * @param sourceId the ID of the source to generate citation for
+     * @param citationId the ID of the citation object to generate citation for
      * @param style the citation style (MLA, APA, CHICAGO)
      * @param backfill whether to use backfill option
      * @return CitationResponse containing the generated citation
      * @throws IllegalArgumentException if citation not found
      */
-    public CitationResponse generateCitationForSource(Long sourceId, String style,
+    public CitationResponse generateCitationForSource(Long citationId, String style,
                                                      boolean backfill) {
         // Find the citation record
-        Optional<Citation> citationOpt = citationRepository.findById(sourceId);
+        Optional<Citation> citationOpt = citationRepository.findById(citationId);
         if (citationOpt.isEmpty()) {
-            throw new ResourceNotFoundException("Citation not found with ID: " + sourceId);
+            throw new ResourceNotFoundException("Citation not found with ID: " + citationId);
         }
 
         Citation citation = citationOpt.get();
         String citationString = generateCitationByMediaType(citation.getMediaId(),
                 citation.getMediaType(), style, backfill);
 
-        return new CitationResponse(sourceId.toString(), citationString);
+        return new CitationResponse(citationId.toString(), citationString);
     }
 
     /**
-     * UPDATE NEEDED FOR NEW API FLOW
      * Generate citations for all sources in a submission group.
      *
      * @param submissionId the ID of the submission containing sources
@@ -322,9 +328,38 @@ public class CitationService {
                 }
                 break;
             case "article":
-                Optional<Article> article = articleRepository.findById(mediaId);
-                if (article.isPresent()) {
-                    return generateCitationByStyle(article.get(), style);
+                Optional<Article> articleOptional = articleRepository.findById(mediaId);
+                if (articleOptional.isPresent()) {
+                    Article article = articleOptional.get();
+                    if (backfill && article.getDoi() != null && !article.getDoi().isEmpty()) {
+                        Article backfilledArticle = crossRefDoiService
+                                .fetchArticleDataByDoi(article.getDoi()).block();
+                        if (backfilledArticle != null) {
+                            // Merge data, giving precedence to the backfilled data
+                            Article mergedArticle = new Article();
+                            mergedArticle.setTitle(backfilledArticle.getTitle() != null
+                                    ? backfilledArticle.getTitle() : article.getTitle());
+                            mergedArticle.setAuthor(backfilledArticle.getAuthor() != null
+                                    ? backfilledArticle.getAuthor() : article.getAuthor());
+                            mergedArticle.setJournal(backfilledArticle.getJournal() != null
+                                    ? backfilledArticle.getJournal() : article.getJournal());
+                            mergedArticle.setVolume(backfilledArticle.getVolume() != null
+                                    ? backfilledArticle.getVolume() : article.getVolume());
+                            mergedArticle.setIssue(backfilledArticle.getIssue() != null
+                                    ? backfilledArticle.getIssue() : article.getIssue());
+                            mergedArticle.setPages(backfilledArticle.getPages() != null
+                                    ? backfilledArticle.getPages() : article.getPages());
+                            mergedArticle.setPublicationYear(
+                                    backfilledArticle.getPublicationYear() != null
+                                    ? backfilledArticle.getPublicationYear()
+                                            : article.getPublicationYear());
+                            mergedArticle.setUrl(backfilledArticle.getUrl() != null
+                                    ? backfilledArticle.getUrl() : article.getUrl());
+                            mergedArticle.setDoi(article.getDoi()); // Keep original DOI
+                            return generateCitationByStyle(mergedArticle, style);
+                        }
+                    }
+                    return generateCitationByStyle(article, style);
                 }
                 break;
             default:

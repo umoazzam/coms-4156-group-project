@@ -63,8 +63,8 @@ class CitationControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(bulkRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.submissionId").exists())
-                .andExpect(jsonPath("$.sourceIds").isArray())
-                .andExpect(jsonPath("$.sourceIds.length()").value(2))
+                .andExpect(jsonPath("$.citationIds").isArray())
+                .andExpect(jsonPath("$.citationIds.length()").value(2))
                 .andReturn();
 
         String responseBody = postResult.getResponse().getContentAsString();

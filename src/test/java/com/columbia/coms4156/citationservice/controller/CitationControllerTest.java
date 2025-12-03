@@ -298,7 +298,7 @@ class CitationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/cite/video/citation generates citation from video data")
+    @DisplayName("POST /api/cite/video generates citation from video data")
     void generateVideoCitationFromData_Success() throws Exception {
         // Arrange
         Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
@@ -308,7 +308,7 @@ class CitationControllerTest {
                 .willReturn(expectedCitation);
 
         // Act & Assert
-        mockMvc.perform(post("/api/cite/video/citation?style=MLA")
+        mockMvc.perform(post("/api/cite/video?style=MLA")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(video)))
                 .andExpect(status().isOk())
@@ -316,7 +316,7 @@ class CitationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/cite/video/citation supports APA style")
+    @DisplayName("POST /api/cite/video supports APA style")
     void generateVideoCitationFromData_APAStyle() throws Exception {
         // Arrange
         Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
@@ -326,7 +326,7 @@ class CitationControllerTest {
                 .willReturn(expectedCitation);
 
         // Act & Assert
-        mockMvc.perform(post("/api/cite/video/citation?style=APA")
+        mockMvc.perform(post("/api/cite/video?style=APA")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(video)))
                 .andExpect(status().isOk())
@@ -337,7 +337,7 @@ class CitationControllerTest {
     // ==================== Article Endpoints ====================
 
     @Test
-    @DisplayName("GET /api/cite/article/{id}/citation returns citation for valid article ID")
+    @DisplayName("GET /api/cite/article/{id} returns citation for valid article ID")
     void generateArticleCitation_Success() throws Exception {
         // Arrange
         Long articleId = 3L;
@@ -349,36 +349,36 @@ class CitationControllerTest {
         given(citationService.generateMLACitation(any(Article.class))).willReturn(expectedCitation);
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/article/{id}/citation", articleId))
+        mockMvc.perform(get("/api/cite/article/{id}", articleId))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedCitation));
     }
 
     @Test
-    @DisplayName("GET /api/cite/article/{id}/citation returns 404 when article not found")
+    @DisplayName("GET /api/cite/article/{id} returns 404 when article not found")
     void generateArticleCitation_NotFound() throws Exception {
         // Arrange
         Long articleId = 999L;
         given(sourceService.findArticleById(articleId)).willReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/article/{id}/citation", articleId))
+        mockMvc.perform(get("/api/cite/article/{id}", articleId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
-    @DisplayName("GET /api/cite/article/{id}/citation returns 400 for invalid ID")
+    @DisplayName("GET /api/cite/article/{id} returns 400 for invalid ID")
     void generateArticleCitation_InvalidId() throws Exception {
         // Act & Assert
-        mockMvc.perform(get("/api/cite/article/{id}/citation", 0))
+        mockMvc.perform(get("/api/cite/article/{id}", 0))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
-    @DisplayName("POST /api/cite/article/citation generates citation from article data")
+    @DisplayName("POST /api/cite/article generates citation from article data")
     void generateArticleCitationFromData_Success() throws Exception {
         // Arrange
         Article article = new Article("Machine Learning Basics", "John Smith");
@@ -388,7 +388,7 @@ class CitationControllerTest {
                 .willReturn(expectedCitation);
 
         // Act & Assert
-        mockMvc.perform(post("/api/cite/article/citation?style=MLA")
+        mockMvc.perform(post("/api/cite/article?style=MLA")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(article)))
                 .andExpect(status().isOk())
@@ -396,7 +396,7 @@ class CitationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/cite/article/citation supports APA style")
+    @DisplayName("POST /api/cite/article supports APA style")
     void generateArticleCitationFromData_APAStyle() throws Exception {
         // Arrange
         Article article = new Article("Machine Learning Basics", "John Smith");
@@ -406,7 +406,7 @@ class CitationControllerTest {
                 .willReturn(expectedCitation);
 
         // Act & Assert
-        mockMvc.perform(post("/api/cite/article/citation?style=APA")
+        mockMvc.perform(post("/api/cite/article?style=APA")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(article)))
                 .andExpect(status().isOk())
@@ -417,61 +417,61 @@ class CitationControllerTest {
     // ==================== General Use Endpoints ====================
 
     @Test
-    @DisplayName("GET /api/cite/source/{sourceId} returns citation for valid source")
+    @DisplayName("GET /api/cite/{citationId} returns citation for valid source")
     void generateCitationForSource_Success() throws Exception {
         // Arrange
-        Long sourceId = 10L;
+        Long citationId = 10L;
         CitationResponse response = new CitationResponse("10", "Sample citation text");
         String defaultStyle = "MLA";
 
-        given(citationService.generateCitationForSource(eq(sourceId), eq(defaultStyle), eq(false)))
+        given(citationService.generateCitationForSource(eq(citationId), eq(defaultStyle), eq(false)))
                 .willReturn(response);
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/source/{sourceId}", sourceId))
+        mockMvc.perform(get("/api/cite/{citationId}", citationId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.CitationID").value("10"))
                 .andExpect(jsonPath("$.CitationString").value("Sample citation text"));
     }
 
     @Test
-    @DisplayName("GET /api/cite/source/{sourceId} supports APA style")
+    @DisplayName("GET /api/cite/{citationId} supports APA style")
     void generateCitationForSource_APAStyle() throws Exception {
         // Arrange
-        Long sourceId = 10L;
+        Long citationId = 10L;
         CitationResponse response = new CitationResponse("10", "APA citation text");
 
-        given(citationService.generateCitationForSource(eq(sourceId), eq("APA"), eq(false)))
+        given(citationService.generateCitationForSource(eq(citationId), eq("APA"), eq(false)))
                 .willReturn(response);
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/source/{sourceId}?style=APA", sourceId))
+        mockMvc.perform(get("/api/cite/{citationId}?style=APA", citationId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.CitationString").value("APA citation text"));
     }
 
     @Test
-    @DisplayName("GET /api/cite/source/{sourceId} returns 404 when source not found")
+    @DisplayName("GET /api/cite/{citationId} returns 404 when source not found")
     void generateCitationForSource_NotFound() throws Exception {
         // Arrange
-        Long sourceId = 999L;
+        Long citationId = 999L;
         String defaultStyle = "MLA";
 
-        given(citationService.generateCitationForSource(eq(sourceId), eq(defaultStyle), eq(false)))
-                .willThrow(new ResourceNotFoundException("Citation not found with ID: " + sourceId));
+        given(citationService.generateCitationForSource(eq(citationId), eq(defaultStyle), eq(false)))
+                .willThrow(new ResourceNotFoundException("Citation not found with ID: " + citationId));
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/source/{sourceId}", sourceId))
+        mockMvc.perform(get("/api/cite/{citationId}", citationId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
-    @DisplayName("GET /api/cite/source/{sourceId} returns 400 for invalid ID")
+    @DisplayName("GET /api/cite/{citationId} returns 400 for invalid ID")
     void generateCitationForSource_InvalidId() throws Exception {
         // Act & Assert
-        mockMvc.perform(get("/api/cite/source/{sourceId}", 0))
+        mockMvc.perform(get("/api/cite/{citationId}", 0))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
@@ -479,17 +479,17 @@ class CitationControllerTest {
 
 
     @Test
-    @DisplayName("GET /api/cite/source/{sourceId} returns 500 for unexpected exception")
+    @DisplayName("GET /api/cite/{citationId} returns 500 for unexpected exception")
     void generateCitationForSource_UnexpectedException() throws Exception {
         // Arrange
-        Long sourceId = 10L;
+        Long citationId = 10L;
         String defaultStyle = "MLA";
 
-        given(citationService.generateCitationForSource(eq(sourceId), eq(defaultStyle), eq(false)))
+        given(citationService.generateCitationForSource(eq(citationId), eq(defaultStyle), eq(false)))
                 .willThrow(new RuntimeException("Unexpected error"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/source/{sourceId}", sourceId))
+        mockMvc.perform(get("/api/cite/{citationId}", citationId))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
@@ -582,17 +582,17 @@ class CitationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/cite/source/{sourceId} supports backfill parameter")
+    @DisplayName("GET /api/cite/{citationId} supports backfill parameter")
     void generateCitationForSource_WithBackfill() throws Exception {
         // Arrange
-        Long sourceId = 10L;
+        Long citationId = 10L;
         CitationResponse response = new CitationResponse("10", "Citation with backfill");
 
-        given(citationService.generateCitationForSource(eq(sourceId), eq("MLA"), eq(true)))
+        given(citationService.generateCitationForSource(eq(citationId), eq("MLA"), eq(true)))
                 .willReturn(response);
 
         // Act & Assert
-        mockMvc.perform(get("/api/cite/source/{sourceId}?backfill=true", sourceId))
+        mockMvc.perform(get("/api/cite/{citationId}?backfill=true", citationId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.CitationString").value("Citation with backfill"));
     }

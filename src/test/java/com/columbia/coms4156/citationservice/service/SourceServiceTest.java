@@ -102,8 +102,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("1", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("1", response.getCitationIds().get(0));
 
         verify(submissionRepository, times(1)).save(any(Submission.class));
         verify(bookRepository, times(1)).findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString());
@@ -140,8 +140,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, 1L);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("1", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("1", response.getCitationIds().get(0));
 
         verify(submissionRepository, never()).save(any(Submission.class));
         verify(submissionRepository, times(1)).findById(1L);
@@ -158,7 +158,7 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(null, response.getSubmissionId());
-        assertTrue(response.getSourceIds().isEmpty());
+        assertTrue(response.getCitationIds().isEmpty());
 
         verify(submissionRepository, never()).save(any(Submission.class));
         verify(bookRepository, never()).findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString());
@@ -184,7 +184,7 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertTrue(response.getSourceIds().isEmpty());
+        assertTrue(response.getCitationIds().isEmpty());
         assertFalse(response.getErrors().isEmpty());
 
         verify(submissionRepository, times(1)).save(any(Submission.class));
@@ -227,8 +227,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("1", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("1", response.getCitationIds().get(0));
         assertFalse(response.getErrors().isEmpty());
 
         verify(submissionRepository, times(1)).save(any(Submission.class));
@@ -265,8 +265,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("1", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("1", response.getCitationIds().get(0));
 
         verify(submissionRepository, times(1)).save(any(Submission.class));
         verify(bookRepository, times(1)).findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString());
@@ -302,8 +302,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("1", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("1", response.getCitationIds().get(0));
 
         verify(submissionRepository, times(1)).save(any(Submission.class));
         verify(articleRepository, times(1)).findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString());
@@ -339,8 +339,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("1", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("1", response.getCitationIds().get(0));
 
         verify(submissionRepository, times(1)).save(any(Submission.class));
         verify(videoRepository, times(1)).findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString());

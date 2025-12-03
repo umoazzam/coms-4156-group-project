@@ -6,14 +6,14 @@ import java.util.ArrayList;
 /**
  * DTO representing a batch response for sources.
  *
- * <p>Contains the submission ID, a list of source IDs, and optional errors.</p>
+ * <p>Contains the submission ID, a list of citation IDs, and optional errors.</p>
  */
 public class SourceBatchResponse {
     /** The ID of the submission associated with the sources. */
     private Long submissionId;
 
-    /** The list of source IDs. */
-    private List<String> sourceIds;
+    /** The list of citation IDs. */
+    private List<String> citationIds;
 
     /** Optional list of error messages produced while processing the batch. */
     private List<String> errors;
@@ -26,29 +26,29 @@ public class SourceBatchResponse {
     }
 
     /**
-     * Constructs a SourceBatchResponse with the given submission ID and source IDs.
+     * Constructs a SourceBatchResponse with the given submission ID and citation IDs.
      * Keeps backward compatibility with existing callers.
      *
      * @param submissionIdParam the ID of the submission
-     * @param sourceIdsParam the list of source IDs
+     * @param citationIdsParam the list of citation IDs
      */
-    public SourceBatchResponse(Long submissionIdParam, List<String> sourceIdsParam) {
+    public SourceBatchResponse(Long submissionIdParam, List<String> citationIdsParam) {
         this.submissionId = submissionIdParam;
-        this.sourceIds = sourceIdsParam;
+        this.citationIds = citationIdsParam;
         this.errors = new ArrayList<>();
     }
 
     /**
-     * Constructs a SourceBatchResponse with submission ID, source IDs and errors.
+     * Constructs a SourceBatchResponse with submission ID, citation IDs and errors.
      *
      * @param submissionIdParam the ID of the submission
-     * @param sourceIdsParam the list of source IDs
+     * @param citationIdsParam the list of citation IDs
      * @param errorsParam the list of error messages
      */
-    public SourceBatchResponse(Long submissionIdParam, List<String> sourceIdsParam,
+    public SourceBatchResponse(Long submissionIdParam, List<String> citationIdsParam,
                                List<String> errorsParam) {
         this.submissionId = submissionIdParam;
-        this.sourceIds = sourceIdsParam;
+        this.citationIds = citationIdsParam;
         this.errors = errorsParam == null ? new ArrayList<>() : errorsParam;
     }
 
@@ -71,21 +71,21 @@ public class SourceBatchResponse {
     }
 
     /**
-     * Gets the list of source IDs.
+     * Gets the list of citation IDs.
      *
-     * @return the list of source IDs
+     * @return the list of citation IDs
      */
-    public List<String> getSourceIds() {
-        return this.sourceIds;
+    public List<String> getCitationIds() {
+        return this.citationIds;
     }
 
     /**
-     * Sets the list of source IDs.
+     * Sets the list of citation IDs.
      *
-     * @param sourceIdsParam the list of source IDs to set
+     * @param citationIdsParam the list of citation IDs to set
      */
-    public void setSourceIds(List<String> sourceIdsParam) {
-        this.sourceIds = sourceIdsParam;
+    public void setCitationIds(List<String> citationIdsParam) {
+        this.citationIds = citationIdsParam;
     }
 
     /**

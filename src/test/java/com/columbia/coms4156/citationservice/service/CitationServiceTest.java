@@ -35,6 +35,8 @@ class CitationServiceTest {
     private SubmissionRepository submissionRepository;
     @Mock
     private GoogleBooksService googleBooksService;
+    @Mock
+    private CrossRefDoiService crossRefDoiService;
 
     @InjectMocks
     private CitationService citationService;
@@ -166,8 +168,8 @@ class CitationServiceTest {
     }
 
     @Test
-    void testGenerateCitationForSourceWithBackfillNoApiResult() {
-        Long sourceId = 2L;
+    void testGenerateCitationForBookWithBackfillNoApiResult() {
+        Long citationId = 2L;
         Long bookId = 101L;
         String isbn = "9780140449112";
         String style = "MLA";
@@ -179,21 +181,21 @@ class CitationServiceTest {
         storedBook.setPublicationYear(2000);
 
         Citation citation = new Citation();
-        citation.setId(sourceId);
+        citation.setId(citationId);
         citation.setMediaId(bookId);
         citation.setMediaType("book");
 
-        when(citationRepository.findById(sourceId)).thenReturn(Optional.of(citation));
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
         when(googleBooksService.fetchBookDataByIsbn(isbn)).thenReturn(Mono.empty());
 
         String expectedCitation = "Author, Original. _Original Title_. Original Publisher, 2000.";
-        assertEquals(expectedCitation, citationService.generateCitationForSource(sourceId, style, true).getCitationString());
+        assertEquals(expectedCitation, citationService.generateCitationForSource(citationId, style, true).getCitationString());
     }
 
     @Test
-    void testGenerateCitationForSourceWithBackfillNoIsbn() {
-        Long sourceId = 3L;
+    void testGenerateCitationForBookWithBackfillNoIsbn() {
+        Long citationId = 3L;
         Long bookId = 102L;
         String style = "MLA";
 
@@ -204,21 +206,21 @@ class CitationServiceTest {
         // No ISBN set
 
         Citation citation = new Citation();
-        citation.setId(sourceId);
+        citation.setId(citationId);
         citation.setMediaId(bookId);
         citation.setMediaType("book");
 
-        when(citationRepository.findById(sourceId)).thenReturn(Optional.of(citation));
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
         // googleBooksService.fetchBookDataByIsbn should not be called
 
         String expectedCitation = "Author, Original. _Original Title_. Original Publisher, 2000.";
-        assertEquals(expectedCitation, citationService.generateCitationForSource(sourceId, style, true).getCitationString());
+        assertEquals(expectedCitation, citationService.generateCitationForSource(citationId, style, true).getCitationString());
     }
 
     @Test
-    void testGenerateCitationForSourceNoBackfill() {
-        Long sourceId = 4L;
+    void testGenerateCitationForBookNoBackfill() {
+        Long citationId = 4L;
         Long bookId = 103L;
         String style = "MLA";
 
@@ -229,16 +231,99 @@ class CitationServiceTest {
         storedBook.setPublicationYear(2000);
 
         Citation citation = new Citation();
-        citation.setId(sourceId);
+        citation.setId(citationId);
         citation.setMediaId(bookId);
         citation.setMediaType("book");
 
-        when(citationRepository.findById(sourceId)).thenReturn(Optional.of(citation));
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
         // googleBooksService.fetchBookDataByIsbn should not be called
 
         String expectedCitation = "Author, Original. _Original Title_. Original Publisher, 2000.";
-        assertEquals(expectedCitation, citationService.generateCitationForSource(sourceId, style, false).getCitationString());
+        assertEquals(expectedCitation, citationService.generateCitationForSource(citationId, style, false).getCitationString());
+    }
+
+    // Article backfill tests
+    @Test
+    void testGenerateCitationForArticleWithBackfillNoApiResult() {
+        Long citationId = 5L;
+        Long articleId = 201L;
+        String doi = "10.1234/test.5678";
+        String style = "MLA";
+
+        Article storedArticle = new Article("Original Article Title", "Original Author");
+        storedArticle.setId(articleId);
+        storedArticle.setDoi(doi);
+        storedArticle.setJournal("Original Journal");
+        storedArticle.setVolume("10");
+        storedArticle.setIssue("3");
+        storedArticle.setPublicationYear(2020);
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(storedArticle));
+        when(crossRefDoiService.fetchArticleDataByDoi(doi)).thenReturn(Mono.empty());
+
+        String expectedCitation = "Author, Original. \"Original Article Title.\" Original Journal, vol. 10, no. 3, 2020.";
+        assertEquals(expectedCitation, citationService.generateCitationForSource(citationId, style, true).getCitationString());
+    }
+
+    @Test
+    void testGenerateCitationForArticleWithBackfillNoDoi() {
+        Long citationId = 6L;
+        Long articleId = 202L;
+        String style = "MLA";
+
+        Article storedArticle = new Article("Original Article Title", "Original Author");
+        storedArticle.setId(articleId);
+        storedArticle.setJournal("Original Journal");
+        storedArticle.setVolume("10");
+        storedArticle.setIssue("3");
+        storedArticle.setPublicationYear(2020);
+        // No DOI set
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(storedArticle));
+        // crossRefDoiService.fetchArticleDataByDoi should not be called
+
+        String expectedCitation = "Author, Original. \"Original Article Title.\" Original Journal, vol. 10, no. 3, 2020.";
+        assertEquals(expectedCitation, citationService.generateCitationForSource(citationId, style, true).getCitationString());
+    }
+
+    @Test
+    void testGenerateCitationForArticleNoBackfill() {
+        Long citationId = 7L;
+        Long articleId = 203L;
+        String style = "MLA";
+
+        Article storedArticle = new Article("Original Article Title", "Original Author");
+        storedArticle.setId(articleId);
+        storedArticle.setDoi("10.1234/test.5678"); // Has DOI but backfill is false
+        storedArticle.setJournal("Original Journal");
+        storedArticle.setVolume("10");
+        storedArticle.setIssue("3");
+        storedArticle.setPublicationYear(2020);
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(storedArticle));
+        // crossRefDoiService.fetchArticleDataByDoi should not be called
+
+        String expectedCitation = "Author, Original. \"Original Article Title.\" Original Journal, vol. 10, no. 3, 2020.";
+        assertEquals(expectedCitation, citationService.generateCitationForSource(citationId, style, false).getCitationString());
     }
 
 }
