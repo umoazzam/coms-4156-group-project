@@ -11,6 +11,33 @@ Authors:
 
 To view the original project proposal, click [here](https://docs.google.com/document/d/1V7UUUKATDx-as5N2krsXF6NSkbQoo0iBBf0t164SlHI/edit?usp=sharing).
 
+## Client Application
+
+A **Python-based University Library Citation Client** is included in this repository to demonstrate the practical usage of our Citation Service API. The client simulates a university library management system where students and faculty can generate citations for required course readings.
+
+**Location:** `client/` directory in this repository
+
+**Features:**
+- Interactive web interface showing course required readings
+- Real-time citation generation in MLA, APA, and Chicago formats
+- Integration with the Citation Service API
+- Support for books, articles, and videos
+
+**Quick Start:**
+```bash
+# Start the Citation Service (Terminal 1)
+mvn spring-boot:run
+
+# Start the Client Application (Terminal 2)
+cd client
+pip install -r requirements.txt
+python app.py
+```
+
+Visit `http://localhost:5000` to access the client interface.
+
+For detailed client setup and usage instructions, see the [Client README](client/README.md).
+
 ## Current Features
 
 - **Multi-Style Citation Generation**: Supports MLA, APA, and Chicago citation formats

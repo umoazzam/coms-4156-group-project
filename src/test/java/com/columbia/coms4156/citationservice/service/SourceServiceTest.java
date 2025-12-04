@@ -388,7 +388,7 @@ class SourceServiceTest {
     void testAddOrAppendSourcesWithNullRequest() {
         var response = sourceService.addOrAppendSources(null, null);
         assertEquals(null, response.getSubmissionId());
-        assertTrue(response.getSourceIds().isEmpty());
+        assertTrue(response.getCitationIds().isEmpty());
     }
 
     @Test
@@ -398,7 +398,7 @@ class SourceServiceTest {
 
         var response = sourceService.addOrAppendSources(request, null);
         assertEquals(null, response.getSubmissionId());
-        assertTrue(response.getSourceIds().isEmpty());
+        assertTrue(response.getCitationIds().isEmpty());
     }
 
     @Test
@@ -429,8 +429,8 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
-        assertEquals("99", response.getSourceIds().get(0));
+        assertEquals(1, response.getCitationIds().size());
+        assertEquals("99", response.getCitationIds().get(0));
 
         verify(citationRepository, never()).save(any(Citation.class));
     }
@@ -469,7 +469,7 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
+        assertEquals(1, response.getCitationIds().size());
     }
 
     @Test
@@ -499,7 +499,7 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
+        assertEquals(1, response.getCitationIds().size());
     }
 
     @Test
@@ -529,7 +529,7 @@ class SourceServiceTest {
         var response = sourceService.addOrAppendSources(request, null);
 
         assertEquals(1L, response.getSubmissionId());
-        assertEquals(1, response.getSourceIds().size());
+        assertEquals(1, response.getCitationIds().size());
     }
 }
 
