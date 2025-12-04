@@ -362,7 +362,11 @@ public class SourceController {
    * @param request The bulk source request containing multiple sources to add
    * @param submissionId Optional submission ID for tracking
    * @return ResponseEntity containing the batch response with HTTP 200 status if successful,
-   *         or HTTP 500 if an error occurs
+   *         or HTTP 500 if an error occurs. The batch response will contain the
+   *         submissionId for group source tracking,
+   *         citationIds for each source, which can be used to cite sources individually,
+   *         errors for any errors that occur.
+   *
    */
   @PostMapping("/sources")
   public ResponseEntity<SourceBatchResponse> addSources(
@@ -372,7 +376,7 @@ public class SourceController {
     if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
       SourceBatchResponse resp = new SourceBatchResponse();
       resp.setSubmissionId(submissionId);
-      resp.setSourceIds(new ArrayList<>());
+      resp.setCitationIds(new ArrayList<>());
       resp.setErrors(Arrays.asList("No sources provided in request"));
       return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
