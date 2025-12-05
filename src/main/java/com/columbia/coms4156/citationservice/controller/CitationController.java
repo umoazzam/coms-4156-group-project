@@ -100,6 +100,8 @@ public class CitationController {
    * Generate an MLA format citation for a stored book.
    *
    * @param id The unique identifier of the book to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
+   * @param backfill Whether to backfill the book data from Google Books API
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if book not found, or HTTP 500 if an error occurs
@@ -154,6 +156,7 @@ public class CitationController {
    * Generate an MLA format citation for a stored video.
    *
    * @param id The unique identifier of the video to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if video not found, or HTTP 500 if an error occurs
@@ -206,6 +209,7 @@ public class CitationController {
    * Generate an MLA format citation for a stored article.
    *
    * @param id The unique identifier of the article to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if article is not found, or HTTP 500 if an error occurs
