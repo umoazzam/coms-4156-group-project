@@ -452,6 +452,12 @@ We used Checkstyle to ensure code quality and adherence to coding standards. The
 mvn checkstyle:check
 ```
 
+### Logging
+We use **SLF4J** with **Logback** for logging. Logs are persisted to the `logs/` directory in the project root.
+- **File**: `logs/application.log`
+- **Rotation**: Daily rotation with a 30-day history and 3GB total size cap.
+- **Configuration**: `src/main/resources/logback-spring.xml`
+
 ### AI Usage
 For this project, we used GitHub Copilot to assist with code generation and troubleshooting. GitHub Copilot is freely available for students through the [GitHub Student Developer Pack](https://education.github.com/pack).
 
@@ -470,5 +476,4 @@ For brevity, our use cases are summarized in the table below. While not every pr
 ## Next Steps
 - Add video backfilling capabilities
 - Add user authentication
-- Add stored logging
 - Deployment & sample client creation
