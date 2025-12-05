@@ -169,6 +169,36 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- PMD Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.21.2</version>
+                <configuration>
+                    <failOnViolation>true</failOnViolation>
+                    <printFailingErrors>true</printFailingErrors>
+                    <minimumPriority>3</minimumPriority>
+                    <targetJdk>17</targetJdk>
+                    <rulesets>
+                        <!-- Use more comprehensive rulesets -->
+                        <ruleset>/rulesets/java/quickstart.xml</ruleset>
+                        <!-- Or create your own: -->
+                        <!-- <ruleset>${project.basedir}/pmd-ruleset.xml</ruleset> -->
+                    </rulesets>
+                    <excludes>
+                        <exclude>**/generated/**</exclude>
+                        <exclude>**/target/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>cpd-check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
