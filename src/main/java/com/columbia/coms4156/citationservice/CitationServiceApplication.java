@@ -25,30 +25,25 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 1.0
  */
 @SpringBootApplication
-public final class CitationServiceApplication {
+@SuppressWarnings("PMD.UseUtilityClass")
+public class CitationServiceApplication {
 
-    /**
-     * Private constructor to prevent instantiation.
-     * This class is a Spring Boot application entry point and should not be instantiated.
-     */
-    private CitationServiceApplication() {
-        // Private constructor to prevent instantiation
-    }
 
-    /**
-     * Main method to start the Spring Boot Citation Service application.
-     * Initializes the embedded Tomcat server and loads the application context
-     * with all necessary beans and configurations.
-     *
-     * <p>The application will start on port 8080 by default and provide:</p>
-     * <ul>
-     *   <li>REST API endpoints at {@code http://localhost:8080/api/}</li>
-     *   <li>H2 database console at {@code http://localhost:8080/h2-console}</li>
-     * </ul>
-     *
-     * @param args Command line arguments passed to the application
-     */
-    public static void main(String[] args) {
-        SpringApplication.run(CitationServiceApplication.class, args);
-    }
+
+  /**
+   * Main method to start the Spring Boot Citation Service application.
+   * Initializes the embedded Tomcat server and loads the application context
+   * with all necessary beans and configurations.
+   *
+   * <p>The application will start on port 8080 by default and provide:</p>
+   * <ul>
+   *   <li>REST API endpoints at {@code http://localhost:8080/api/}</li>
+   *   <li>H2 database console at {@code http://localhost:8080/h2-console}</li>
+   * </ul>
+   *
+   * @param args Command line arguments passed to the application
+   */
+  public static void main(String[] args) {
+    SpringApplication.run(CitationServiceApplication.class, args);
+  }
 }
