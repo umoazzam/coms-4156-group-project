@@ -15,11 +15,6 @@ public class BulkSourceRequest {
     private List<SourceDTO> sources;
 
     /**
-     * Default constructor for BulkSourceRequest.
-     */
-    public BulkSourceRequest() { }
-
-    /**
      * Gets the user associated with the request.
      *
      * @return the user

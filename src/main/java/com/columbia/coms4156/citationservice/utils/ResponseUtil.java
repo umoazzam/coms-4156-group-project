@@ -7,7 +7,15 @@ import org.springframework.http.ResponseEntity;
 /**
  * Utility class for creating standardized HTTP responses.
  */
-public class ResponseUtil {
+public final class ResponseUtil {
+
+    /**
+     * Private constructor to prevent instantiation.
+     * This is a utility class with only static methods.
+     */
+    private ResponseUtil() {
+        // Private constructor to prevent instantiation
+    }
 
     /**
      * Creates a successful response with the given body and status.

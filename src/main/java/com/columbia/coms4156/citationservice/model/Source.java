@@ -38,8 +38,11 @@ public abstract class Source {
 
     /**
      * Default constructor for Source.
+     * Required by JPA for entity instantiation.
      */
-    public Source() { }
+    public Source() {
+        // Empty constructor required by JPA
+    }
 
     /**
      * Constructor for Source with title and author.

@@ -21,8 +21,11 @@ public class CitationResponse {
 
     /**
      * Default constructor for CitationResponse.
+     * Required for JSON deserialization.
      */
-    public CitationResponse() { }
+    public CitationResponse() {
+        // Empty constructor required for JSON deserialization
+    }
 
     /**
      * Constructor for CitationResponse with citation details.

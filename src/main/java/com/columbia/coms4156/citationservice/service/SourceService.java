@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -317,7 +318,7 @@ public class SourceService {
 
     for (SourceDTO src : request.getSources()) {
       String rawType = src.getMediaType();
-      String type = rawType == null ? "" : rawType.trim().toLowerCase();
+      String type = rawType == null ? "" : rawType.trim().toLowerCase(Locale.ENGLISH);
       String rawTitle = src.getTitle();
       String title = rawTitle == null ? "" : rawTitle.trim();
       String rawAuthor = src.getAuthor();

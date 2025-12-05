@@ -57,8 +57,11 @@ public class Citation {
 
     /**
      * Default constructor for Citation.
+     * Required by JPA for entity instantiation.
      */
-    public Citation() { }
+    public Citation() {
+        // Empty constructor required by JPA
+    }
 
     /**
      * Constructor for Citation with all required fields.

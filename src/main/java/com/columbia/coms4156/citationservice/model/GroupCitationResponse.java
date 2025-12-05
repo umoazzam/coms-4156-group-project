@@ -22,8 +22,11 @@ public class GroupCitationResponse {
 
     /**
      * Default constructor for GroupCitationResponse.
+     * Required for JSON deserialization.
      */
-    public GroupCitationResponse() { }
+    public GroupCitationResponse() {
+        // Empty constructor required for JSON deserialization
+    }
 
     /**
      * Constructor for GroupCitationResponse with submission details.

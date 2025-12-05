@@ -10,11 +10,6 @@ public class UserDTO {
     private String username;
 
     /**
-     * Default constructor for UserDTO.
-     */
-    public UserDTO() { }
-
-    /**
      * Gets the username.
      *
      * @return the username

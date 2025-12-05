@@ -37,7 +37,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex, HttpServletRequest request) {
-        LOGGER.warn("Resource not found: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Resource not found: {}", ex.getMessage());
+        }
         return ResponseUtil.notFound(ex.getMessage(), request.getRequestURI());
     }
 
@@ -51,7 +53,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
             ValidationException ex, HttpServletRequest request) {
-        LOGGER.warn("Validation error: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Validation error: {}", ex.getMessage());
+        }
         return ResponseUtil.badRequest(ex.getMessage(), request.getRequestURI());
     }
 
@@ -65,7 +69,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, HttpServletRequest request) {
-        LOGGER.warn("Illegal argument: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Illegal argument: {}", ex.getMessage());
+        }
         return ResponseUtil.badRequest(ex.getMessage(), request.getRequestURI());
     }
 
@@ -86,7 +92,9 @@ public class GlobalExceptionHandler {
                     .append(error.getDefaultMessage())
                     .append("; ");
         }
-        LOGGER.warn("Validation error: {}", errorMessage.toString());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Validation error: {}", errorMessage.toString());
+        }
         return ResponseUtil.badRequest(errorMessage.toString(), request.getRequestURI());
     }
 
@@ -100,7 +108,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex, HttpServletRequest request) {
-        LOGGER.warn("Malformed JSON request: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Malformed JSON request: {}", ex.getMessage());
+        }
         return ResponseUtil.badRequest("Malformed JSON request: " + ex.getMessage(),
                 request.getRequestURI());
     }
@@ -115,7 +125,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
-        LOGGER.warn("Method not allowed: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Method not allowed: {}", ex.getMessage());
+        }
         return ResponseUtil.error("Method Not Allowed", ex.getMessage(),
                 org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED,
                 request.getRequestURI());
@@ -131,7 +143,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
             HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
-        LOGGER.warn("Unsupported media type: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Unsupported media type: {}", ex.getMessage());
+        }
         return ResponseUtil.error("Unsupported Media Type", ex.getMessage(),
                 org.springframework.http.HttpStatus.UNSUPPORTED_MEDIA_TYPE,
                 request.getRequestURI());
@@ -148,7 +162,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        LOGGER.warn("Method argument type mismatch: {}", ex.getMessage());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("Method argument type mismatch: {}", ex.getMessage());
+        }
         String errorMessage = String.format(
                 "Invalid parameter '%s': Value '%s' could not be converted to type %s.",
                 ex.getName(), ex.getValue(),
@@ -167,7 +183,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
-        LOGGER.error("Unexpected error occurred", ex);
+        if (LOGGER.isErrorEnabled()) {
+            LOGGER.error("Unexpected error occurred", ex);
+        }
         String message = "An unexpected error occurred: " + ex.getMessage();
         return ResponseUtil.internalServerError(message, request.getRequestURI());
     }
