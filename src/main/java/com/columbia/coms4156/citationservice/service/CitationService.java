@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -286,7 +287,7 @@ public class CitationService {
      */
     private String generateCitationByMediaType(Long mediaId, String mediaType, String style,
                                              boolean backfill) {
-        switch (mediaType.toLowerCase()) {
+        switch (mediaType.toLowerCase(Locale.ENGLISH)) {
             case "book":
                 Optional<Book> bookOptional = bookRepository.findById(mediaId);
                 if (bookOptional.isPresent()) {
@@ -342,7 +343,7 @@ public class CitationService {
      * @throws IllegalArgumentException if citation style or source type is unsupported
      */
     public String generateCitationByStyle(Object source, String style) {
-        switch (style.toUpperCase()) {
+        switch (style.toUpperCase(Locale.ENGLISH)) {
             case "MLA":
                 if (source instanceof Book) {
                     return generateMLACitation((Book) source);
