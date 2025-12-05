@@ -12,6 +12,8 @@ import com.columbia.coms4156.citationservice.service.SourceService;
 import com.columbia.coms4156.citationservice.utils.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +36,11 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/api/cite")
 @CrossOrigin(origins = "*")
 public class CitationController {
+
+  /**
+   * Logger for this class.
+   */
+  private static final Logger LOGGER = LoggerFactory.getLogger(CitationController.class);
 
   /**
    * Service for citation generation operations.
@@ -83,8 +90,8 @@ public class CitationController {
   private void validateMediaType(String mediaType) {
     if (mediaType == null || mediaType.trim().isEmpty()) {
       throw new ValidationException(
-              "Citation media type cannot be null or empty. "
-                      + "Supported media types: Book, Video, Article");
+          "Citation media type cannot be null or empty. "
+              + "Supported media types: Book, Video, Article");
     }
   }
 
@@ -93,19 +100,28 @@ public class CitationController {
    * Generate an MLA format citation for a stored book.
    *
    * @param id The unique identifier of the book to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
+   * @param backfill Whether to backfill the book data from Google Books API
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if book not found, or HTTP 500 if an error occurs
    */
   @GetMapping("/book/{id}")
-  public ResponseEntity<?> generateBookCitation(@PathVariable Long id, HttpServletRequest request) {
+  public ResponseEntity<?> generateBookCitation(@PathVariable Long id,
+      @RequestParam(defaultValue = "mla") String style,
+      @RequestParam(defaultValue = "false") boolean backfill,
+      HttpServletRequest request) {
+    LOGGER.info("Received request to generate {} citation for book ID: {} (backfill={})",
+        style, id, backfill);
     validateId(id, "Book");
+    validateStyle(style);
 
     Book book = sourceService.findBookById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No book found with ID: " + id + ". Please verify the book ID and try again."));
 
-    String citation = citationService.generateMLACitation(book);
+    String citation = citationService.generateCitationByStyle(book, style);
+    LOGGER.info("Successfully generated {} citation for book ID: {}", style, id);
     return ResponseUtil.ok(citation);
   }
 
@@ -140,20 +156,25 @@ public class CitationController {
    * Generate an MLA format citation for a stored video.
    *
    * @param id The unique identifier of the video to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if video not found, or HTTP 500 if an error occurs
    */
   @GetMapping("/video/{id}")
   public ResponseEntity<?> generateVideoCitation(@PathVariable Long id,
-                                                 HttpServletRequest request) {
+      @RequestParam(defaultValue = "mla") String style,
+      HttpServletRequest request) {
+    LOGGER.info("Received request to generate {} citation for video ID: {}", style, id);
     validateId(id, "Video");
+    validateStyle(style);
 
     Video video = sourceService.findVideoById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No video found with ID: " + id + ". Please verify the video ID and try again."));
 
-    String citation = citationService.generateMLACitation(video);
+    String citation = citationService.generateCitationByStyle(video, style);
+    LOGGER.info("Successfully generated {} citation for video ID: {}", style, id);
     return ResponseUtil.ok(citation);
   }
 
@@ -188,20 +209,25 @@ public class CitationController {
    * Generate an MLA format citation for a stored article.
    *
    * @param id The unique identifier of the article to generate citation for
+   * @param style The citation style (MLA, APA, Chicago)
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if article is not found, or HTTP 500 if an error occurs
    */
   @GetMapping("/article/{id}")
   public ResponseEntity<?> generateArticleCitation(@PathVariable Long id,
-                                                   HttpServletRequest request) {
+      @RequestParam(defaultValue = "mla") String style,
+      HttpServletRequest request) {
+    LOGGER.info("Received request to generate {} citation for article ID: {}", style, id);
     validateId(id, "Article");
+    validateStyle(style);
 
     Article article = sourceService.findArticleById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No article found with ID: " + id + ". Please verify the article ID and try again."));
 
-    String citation = citationService.generateMLACitation(article);
+    String citation = citationService.generateCitationByStyle(article, style);
+    LOGGER.info("Successfully generated {} citation for article ID: {}", style, id);
     return ResponseUtil.ok(citation);
   }
 
@@ -258,7 +284,7 @@ public class CitationController {
     validateStyle(style);
 
     CitationResponse response = citationService.generateCitationForSource(
-            citationId, style, backfill);
+        citationId, style, backfill);
     return ResponseUtil.ok(response);
   }
 

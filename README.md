@@ -98,7 +98,8 @@ src/
 │   │       └── `DatabaseStartupCheck.java`        # Checks database connection
 │   └── resources/
 │       ├── `application.properties`
-│       └── `(local) application-dev.properties`   # NOT committed — see 'Running the Application'
+│       ├── `(local) application-dev.properties`   # NOT committed — see 'Running the Application'
+│       └── `logback-spring.xml`                   # Logging configuration
 └── test/
     └── java/com/columbia/coms4156/citationservice/
         ├── controller/
@@ -200,12 +201,12 @@ See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit)
 ### CitationController
 | Method | Endpoint                       | Description                                                           | Input                                                                                            | Output                                                |
 |--------|--------------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| GET    | `/api/cite/book/{id}`          | Generate MLA citation for a stored Book by ID                         | Path param: id (Long)                                                                            | 200 OK w/ Citation string or 404 NOT FOUND            |
-| POST   | `/api/cite/book`               | Generate MLA citation from provided Book JSON (no save)               | Book JSON + Query param: style (default: "MLA")                                                  | 200 OK w/ Citation string or 404 BAD REQUEST          |
-| GET    | `/api/cite/video/{id}`         | Generate MLA citation for a stored Video by ID                        | Path param: id (Long)                                                                            | 200 OK w/ Citation string or 404 NOT FOUND            |
-| POST   | `/api/cite/video`       | Generate MLA citation from provided Video JSON (no save)              | Video JSON + Query param: style (default: "MLA")                                                 | 200 OK w/ Citation string or 404 BAD REQUEST          |
-| GET    | `/api/cite/article/{id}` | Generate MLA citation for a stored Article by ID                      | Path param: id (Long)                                                                            | 200 OK w/ Citation string or 404 NOT FOUND            |
-| POST   | `/api/cite/article`    | Generate MLA citation from provided Article JSON (no save)            | Article JSON + Query param: style (default: "MLA")                                               | 200 OK w/ Citation string or 404 BAD REQUEST          |
+| GET    | `/api/cite/book/{id}`          | Generate citation for a stored Book by ID                             | Path param: id (Long), Query param: style (default: "MLA")                                       | 200 OK w/ Citation string or 404 NOT FOUND            |
+| POST   | `/api/cite/book`               | Generate citation from provided Book JSON (no save)                   | Book JSON + Query param: style (default: "MLA")                                                  | 200 OK w/ Citation string or 404 BAD REQUEST          |
+| GET    | `/api/cite/video/{id}`         | Generate citation for a stored Video by ID                            | Path param: id (Long), Query param: style (default: "MLA")                                       | 200 OK w/ Citation string or 404 NOT FOUND            |
+| POST   | `/api/cite/video`              | Generate citation from provided Video JSON (no save)                  | Video JSON + Query param: style (default: "MLA")                                                 | 200 OK w/ Citation string or 404 BAD REQUEST          |
+| GET    | `/api/cite/article/{id}`       | Generate citation for a stored Article by ID                          | Path param: id (Long), Query param: style (default: "MLA")                                       | 200 OK w/ Citation string or 404 NOT FOUND            |
+| POST   | `/api/cite/article`            | Generate citation from provided Article JSON (no save)                | Article JSON + Query param: style (default: "MLA")                                               | 200 OK w/ Citation string or 404 BAD REQUEST          |
 | GET    | `/api/cite/{citationId}`  | Generate citation for a single source with style and backfill options | Path param: citationId (Long), Query params: style (default: "MLA"), backfill (default: false)     | 200 OK w/ CitationResponse JSON or 404 NOT FOUND      |
 | GET    | `/api/cite/group/{submissionId}`  | Generate citations for all sources in a submission group              | Path param: submissionId (Long), Query params: style (default: "MLA"), backfill (default: false) | 200 OK w/ GroupCitationResponse JSON or 404 NOT FOUND |
 
@@ -457,6 +458,7 @@ We use **SLF4J** with **Logback** for logging. Logs are persisted to the `logs/`
 - **File**: `logs/application.log`
 - **Rotation**: Daily rotation with a 30-day history and 3GB total size cap.
 - **Configuration**: `src/main/resources/logback-spring.xml`
+- **Levels**: Root logger set to `WARN` to reduce framework verbosity; Application logger set to `INFO` for detailed business logic tracking.
 
 ### AI Usage
 For this project, we used GitHub Copilot to assist with code generation and troubleshooting. GitHub Copilot is freely available for students through the [GitHub Student Developer Pack](https://education.github.com/pack).

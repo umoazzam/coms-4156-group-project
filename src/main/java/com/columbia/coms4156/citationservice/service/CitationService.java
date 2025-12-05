@@ -16,6 +16,8 @@ import com.columbia.coms4156.citationservice.repository.VideoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +30,11 @@ import java.util.Optional;
  */
 @Service
 public class CitationService {
+
+    /**
+     * Logger for this class.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(CitationService.class);
 
     /**
      * Repository for managing Book entities.
@@ -70,12 +77,12 @@ public class CitationService {
      */
     @Autowired
     public CitationService(BookRepository pBookRepository,
-                           VideoRepository pVideoRepository,
-                           ArticleRepository pArticleRepository,
-                           CitationRepository pCitationRepository,
-                           SubmissionRepository pSubmissionRepository,
-                           GoogleBooksService pGoogleBooksService,
-                           CrossRefDoiService pCrossRefDoiService) {
+            VideoRepository pVideoRepository,
+            ArticleRepository pArticleRepository,
+            CitationRepository pCitationRepository,
+            SubmissionRepository pSubmissionRepository,
+            GoogleBooksService pGoogleBooksService,
+            CrossRefDoiService pCrossRefDoiService) {
         this.bookRepository = pBookRepository;
         this.videoRepository = pVideoRepository;
         this.articleRepository = pArticleRepository;
@@ -84,7 +91,6 @@ public class CitationService {
         this.googleBooksService = pGoogleBooksService;
         this.crossRefDoiService = pCrossRefDoiService;
     }
-
 
     // CITATION GENERATION METHODS
     /**
@@ -237,7 +243,7 @@ public class CitationService {
      * @throws IllegalArgumentException if citation not found
      */
     public CitationResponse generateCitationForSource(Long citationId, String style,
-                                                     boolean backfill) {
+            boolean backfill) {
         // Find the citation record
         Optional<Citation> citationOpt = citationRepository.findById(citationId);
         if (citationOpt.isEmpty()) {
@@ -262,7 +268,7 @@ public class CitationService {
      */
     @Transactional
     public GroupCitationResponse generateCitationsForGroup(Long submissionId, String style,
-                                                          boolean backfill) {
+            boolean backfill) {
         Optional<Submission> submissionOpt = submissionRepository.findById(submissionId);
         if (submissionOpt.isEmpty()) {
             throw new ResourceNotFoundException("Submission not found with ID: " + submissionId);
@@ -291,16 +297,20 @@ public class CitationService {
      * @throws IllegalArgumentException if media type is unsupported or media not found
      */
     private String generateCitationByMediaType(Long mediaId, String mediaType, String style,
-                                             boolean backfill) {
+            boolean backfill) {
         switch (mediaType.toLowerCase()) {
             case "book":
                 Optional<Book> bookOptional = bookRepository.findById(mediaId);
                 if (bookOptional.isPresent()) {
                     Book book = bookOptional.get();
                     if (backfill && book.getIsbn() != null && !book.getIsbn().isEmpty()) {
+                        LOGGER.info("Attempting to backfill book data for ISBN: {}",
+                                book.getIsbn());
                         Book backfilledBook = googleBooksService
                                 .fetchBookDataByIsbn(book.getIsbn()).block();
                         if (backfilledBook != null) {
+                            LOGGER.info("Successfully fetched backfill data for ISBN: {}",
+                                    book.getIsbn());
                             // Merge data, giving precedence to the backfilled data
                             Book mergedBook = new Book();
                             mergedBook.setTitle(backfilledBook.getTitle() != null
@@ -311,7 +321,7 @@ public class CitationService {
                                     ? backfilledBook.getPublisher() : book.getPublisher());
                             mergedBook.setPublicationYear(
                                     backfilledBook.getPublicationYear() != null
-                                    ? backfilledBook.getPublicationYear()
+                                            ? backfilledBook.getPublicationYear()
                                             : book.getPublicationYear());
                             mergedBook.setIsbn(book.getIsbn()); // Keep original ISBN
                             mergedBook.setCity(book.getCity()); // Keep original city
@@ -332,9 +342,13 @@ public class CitationService {
                 if (articleOptional.isPresent()) {
                     Article article = articleOptional.get();
                     if (backfill && article.getDoi() != null && !article.getDoi().isEmpty()) {
+                        LOGGER.info("Attempting to backfill article data for DOI: {}",
+                                article.getDoi());
                         Article backfilledArticle = crossRefDoiService
                                 .fetchArticleDataByDoi(article.getDoi()).block();
                         if (backfilledArticle != null) {
+                            LOGGER.info("Successfully fetched backfill data for DOI: {}",
+                                    article.getDoi());
                             // Merge data, giving precedence to the backfilled data
                             Article mergedArticle = new Article();
                             mergedArticle.setTitle(backfilledArticle.getTitle() != null
@@ -351,7 +365,7 @@ public class CitationService {
                                     ? backfilledArticle.getPages() : article.getPages());
                             mergedArticle.setPublicationYear(
                                     backfilledArticle.getPublicationYear() != null
-                                    ? backfilledArticle.getPublicationYear()
+                                            ? backfilledArticle.getPublicationYear()
                                             : article.getPublicationYear());
                             mergedArticle.setUrl(backfilledArticle.getUrl() != null
                                     ? backfilledArticle.getUrl() : article.getUrl());
