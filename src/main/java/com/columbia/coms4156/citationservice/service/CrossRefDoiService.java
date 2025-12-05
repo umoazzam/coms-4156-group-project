@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -14,6 +16,11 @@ import java.util.List;
  */
 @Service
 public class CrossRefDoiService {
+
+    /**
+     * Logger for this class.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrossRefDoiService.class);
 
     /**
      * WebClient for making HTTP requests to the CrossRef API.
@@ -31,7 +38,7 @@ public class CrossRefDoiService {
      * @param baseUrl The base URL for the CrossRef API.
      */
     public CrossRefDoiService(WebClient.Builder webClientBuilder,
-                              @Value("${crossref.api.base-url}") String baseUrl) {
+            @Value("${crossref.api.base-url}") String baseUrl) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
@@ -45,17 +52,26 @@ public class CrossRefDoiService {
             return Mono.empty();
         }
 
+        LOGGER.info("Fetching article data from CrossRef API for DOI: {}", doi);
+
         return webClient.get()
-                .uri(uriBuilder ->
-                        uriBuilder.path("/works/" + doi)
-                                .build())
+                .uri(uriBuilder -> uriBuilder.path("/works/" + doi)
+                        .build())
                 .retrieve()
                 .onStatus(status -> status.value() == HTTP_NOT_FOUND,
-                        response -> Mono.empty())
+                        response -> {
+                            LOGGER.warn("CrossRef API returned 404 for DOI: {}", doi);
+                            return Mono.empty();
+                        })
                 .bodyToMono(CrossRefApiResponse.class)
-                .flatMap(apiResponse ->
-                        parseCrossRefApiResponse(apiResponse, doi))
-                .onErrorResume(e -> Mono.empty());
+                .flatMap(apiResponse -> {
+                    LOGGER.info("Successfully fetched article data for DOI: {}", doi);
+                    return parseCrossRefApiResponse(apiResponse, doi);
+                })
+                .onErrorResume(e -> {
+                    LOGGER.error("Error fetching data from CrossRef API for DOI: {}", doi, e);
+                    return Mono.empty();
+                });
     }
 
     /**

@@ -26,8 +26,12 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <!-- Set root logger to WARN to reduce startup noise -->
+    <root level="WARN">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
     </root>
+
+    <!-- Enable INFO logging for our application -->
+    <logger name="com.columbia.coms4156.citationservice" level="INFO" />
 </configuration>

@@ -12,6 +12,8 @@ import com.columbia.coms4156.citationservice.utils.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +42,11 @@ import java.util.Arrays;
 @RequestMapping("/api/source")
 @CrossOrigin(origins = "*")
 public class SourceController {
+
+  /**
+   * Logger for this class.
+   */
+  private static final Logger LOGGER = LoggerFactory.getLogger(SourceController.class);
 
   /**
    * Service for source management operations.
@@ -72,13 +79,15 @@ public class SourceController {
    */
   @PostMapping("/book")
   public ResponseEntity<?> createBook(@Valid @RequestBody Book book,
-                                       HttpServletRequest request) {
+      HttpServletRequest request) {
+    LOGGER.info("Received request to create book: {}", book != null ? book.getTitle() : "null");
     if (book == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide book information.");
     }
 
     Book savedBook = sourceService.saveBook(book);
+    LOGGER.info("Successfully created book with ID: {}", savedBook.getId());
     return ResponseUtil.created(savedBook);
   }
 
@@ -124,8 +133,9 @@ public class SourceController {
    */
   @PutMapping("/book/{id}")
   public ResponseEntity<?> updateBook(@PathVariable Long id,
-                                        @Valid @RequestBody Book book,
-                                        HttpServletRequest request) {
+      @Valid @RequestBody Book book,
+      HttpServletRequest request) {
+    LOGGER.info("Received request to update book with ID: {}", id);
     validateId(id, "Book");
     if (book == null) {
       throw new ValidationException(
@@ -137,6 +147,7 @@ public class SourceController {
       throw new ResourceNotFoundException(
           "No book found with ID: " + id + ". Cannot update non-existent book.");
     }
+    LOGGER.info("Successfully updated book with ID: {}", id);
     return ResponseUtil.ok(updatedBook);
   }
 
@@ -150,12 +161,14 @@ public class SourceController {
    */
   @DeleteMapping("/book/{id}")
   public ResponseEntity<?> deleteBook(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to delete book with ID: {}", id);
     validateId(id, "Book");
 
     sourceService.findBookById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No book found with ID: " + id + ". Cannot delete non-existent book."));
     sourceService.deleteBook(id);
+    LOGGER.info("Successfully deleted book with ID: {}", id);
     return ResponseUtil.noContent();
   }
 
@@ -170,13 +183,15 @@ public class SourceController {
    */
   @PostMapping("/video")
   public ResponseEntity<?> createVideo(@Valid @RequestBody Video video,
-                                        HttpServletRequest request) {
+      HttpServletRequest request) {
+    LOGGER.info("Received request to create video: {}", video != null ? video.getTitle() : "null");
     if (video == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide video information.");
     }
 
     Video savedVideo = sourceService.saveVideo(video);
+    LOGGER.info("Successfully created video with ID: {}", savedVideo.getId());
     return ResponseUtil.created(savedVideo);
   }
 
@@ -222,8 +237,8 @@ public class SourceController {
    */
   @PutMapping("/video/{id}")
   public ResponseEntity<?> updateVideo(@PathVariable Long id,
-                                      @Valid @RequestBody Video video,
-                                      HttpServletRequest request) {
+      @Valid @RequestBody Video video,
+      HttpServletRequest request) {
     validateId(id, "Video");
     if (video == null) {
       throw new ValidationException(
@@ -248,12 +263,14 @@ public class SourceController {
    */
   @DeleteMapping("/video/{id}")
   public ResponseEntity<?> deleteVideo(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to delete video with ID: {}", id);
     validateId(id, "Video");
 
     sourceService.findVideoById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No video found with ID: " + id + ". Cannot delete non-existent video."));
     sourceService.deleteVideo(id);
+    LOGGER.info("Successfully deleted video with ID: {}", id);
     return ResponseUtil.noContent();
   }
 
@@ -268,13 +285,16 @@ public class SourceController {
    */
   @PostMapping("/article")
   public ResponseEntity<?> createArticle(@Valid @RequestBody Article article,
-                                         HttpServletRequest request) {
+      HttpServletRequest request) {
+    LOGGER.info("Received request to create article: {}",
+        article != null ? article.getTitle() : "null");
     if (article == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide article information.");
     }
 
     Article savedArticle = sourceService.saveArticle(article);
+    LOGGER.info("Successfully created article with ID: {}", savedArticle.getId());
     return ResponseUtil.created(savedArticle);
   }
 
@@ -320,8 +340,8 @@ public class SourceController {
    */
   @PutMapping("/article/{id}")
   public ResponseEntity<?> updateArticle(@PathVariable Long id,
-                                        @Valid @RequestBody Article article,
-                                        HttpServletRequest request) {
+      @Valid @RequestBody Article article,
+      HttpServletRequest request) {
     validateId(id, "Article");
     if (article == null) {
       throw new ValidationException(
@@ -372,15 +392,24 @@ public class SourceController {
   public ResponseEntity<SourceBatchResponse> addSources(
       @RequestBody BulkSourceRequest request,
       @RequestParam(value = "submissionId", required = false) Long submissionId) {
+    int sourceCount = (request != null && request.getSources() != null)
+        ? request.getSources().size()
+        : 0;
+    LOGGER.info("Received batch request to add {} sources (submissionId={})",
+        sourceCount, submissionId);
+
     // return 400 Bad Request when the request has no sources
     if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
       SourceBatchResponse resp = new SourceBatchResponse();
       resp.setSubmissionId(submissionId);
       resp.setCitationIds(new ArrayList<>());
       resp.setErrors(Arrays.asList("No sources provided in request"));
+      LOGGER.warn("Batch request rejected: No sources provided");
       return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
     SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+    LOGGER.info("Batch processing completed for submissionId: {}. Created {} citations.",
+        resp.getSubmissionId(), resp.getCitationIds().size());
     return ResponseUtil.ok(resp);
   }
 }

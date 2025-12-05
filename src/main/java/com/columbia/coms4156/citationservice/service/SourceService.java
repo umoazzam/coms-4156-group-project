@@ -18,6 +18,8 @@ import com.columbia.coms4156.citationservice.repository.UserRepository;
 import com.columbia.coms4156.citationservice.repository.VideoRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,11 @@ import java.util.Optional;
  */
 @Service
 public class SourceService {
+
+  /**
+   * Logger for this class.
+   */
+  private static final Logger LOGGER = LoggerFactory.getLogger(SourceService.class);
 
   /**
    * Repository for managing Book entities.
@@ -136,17 +143,17 @@ public class SourceService {
    */
   public Book updateBook(Long id, Book updatedBook) {
     return bookRepository.findById(id)
-            .map(book -> {
-              book.setTitle(updatedBook.getTitle());
-              book.setAuthor(updatedBook.getAuthor());
-              book.setPublisher(updatedBook.getPublisher());
-              book.setPublicationYear(updatedBook.getPublicationYear());
-              book.setCity(updatedBook.getCity());
-              book.setEdition(updatedBook.getEdition());
-              book.setIsbn(updatedBook.getIsbn());
-              return bookRepository.save(book);
-            })
-            .orElse(null);
+        .map(book -> {
+          book.setTitle(updatedBook.getTitle());
+          book.setAuthor(updatedBook.getAuthor());
+          book.setPublisher(updatedBook.getPublisher());
+          book.setPublicationYear(updatedBook.getPublicationYear());
+          book.setCity(updatedBook.getCity());
+          book.setEdition(updatedBook.getEdition());
+          book.setIsbn(updatedBook.getIsbn());
+          return bookRepository.save(book);
+        })
+        .orElse(null);
   }
 
   // --- Video Methods ---
@@ -197,17 +204,17 @@ public class SourceService {
    */
   public Video updateVideo(Long id, Video updatedVideo) {
     return videoRepository.findById(id)
-            .map(video -> {
-              video.setTitle(updatedVideo.getTitle());
-              video.setAuthor(updatedVideo.getAuthor());
-              video.setDirector(updatedVideo.getDirector());
-              video.setDurationSeconds(updatedVideo.getDurationSeconds());
-              video.setPlatform(updatedVideo.getPlatform());
-              video.setUrl(updatedVideo.getUrl());
-              video.setReleaseYear(updatedVideo.getReleaseYear());
-              return videoRepository.save(video);
-            })
-            .orElse(null);
+        .map(video -> {
+          video.setTitle(updatedVideo.getTitle());
+          video.setAuthor(updatedVideo.getAuthor());
+          video.setDirector(updatedVideo.getDirector());
+          video.setDurationSeconds(updatedVideo.getDurationSeconds());
+          video.setPlatform(updatedVideo.getPlatform());
+          video.setUrl(updatedVideo.getUrl());
+          video.setReleaseYear(updatedVideo.getReleaseYear());
+          return videoRepository.save(video);
+        })
+        .orElse(null);
   }
 
   // --- Article Methods ---
@@ -258,19 +265,19 @@ public class SourceService {
    */
   public Article updateArticle(Long id, Article updatedArticle) {
     return articleRepository.findById(id)
-            .map(article -> {
-              article.setTitle(updatedArticle.getTitle());
-              article.setAuthor(updatedArticle.getAuthor());
-              article.setJournal(updatedArticle.getJournal());
-              article.setVolume(updatedArticle.getVolume());
-              article.setIssue(updatedArticle.getIssue());
-              article.setPages(updatedArticle.getPages());
-              article.setDoi(updatedArticle.getDoi());
-              article.setUrl(updatedArticle.getUrl());
-              article.setPublicationYear(updatedArticle.getPublicationYear());
-              return articleRepository.save(article);
-            })
-            .orElse(null);
+        .map(article -> {
+          article.setTitle(updatedArticle.getTitle());
+          article.setAuthor(updatedArticle.getAuthor());
+          article.setJournal(updatedArticle.getJournal());
+          article.setVolume(updatedArticle.getVolume());
+          article.setIssue(updatedArticle.getIssue());
+          article.setPages(updatedArticle.getPages());
+          article.setDoi(updatedArticle.getDoi());
+          article.setUrl(updatedArticle.getUrl());
+          article.setPublicationYear(updatedArticle.getPublicationYear());
+          return articleRepository.save(article);
+        })
+        .orElse(null);
   }
 
   /**
@@ -305,10 +312,12 @@ public class SourceService {
         uOpt.ifPresent(submission::setUser);
       }
       submission = submissionRepository.save(submission);
+      LOGGER.info("Created new submission with ID: {}", submission.getId());
     } else {
       final String msg = "submissionId not found: " + submissionId;
       submission = submissionRepository.findById(submissionId)
           .orElseThrow(() -> new ResourceNotFoundException(msg));
+      LOGGER.info("Found existing submission with ID: {}", submissionId);
     }
 
     List<String> savedCitationIds = new ArrayList<>();
@@ -336,6 +345,7 @@ public class SourceService {
           Book book;
           if (bOpt.isPresent()) {
             book = bOpt.get();
+            LOGGER.info("Found existing book: {} by {}", title, author);
           } else {
             book = new Book();
             book.setTitle(title);
@@ -346,6 +356,7 @@ public class SourceService {
             book.setCity(src.getCity());
             book.setEdition(src.getEdition());
             book = bookRepository.save(book);
+            LOGGER.info("Created new book: {} by {}", title, author);
           }
           mediaId = book.getId();
           break;
@@ -395,10 +406,11 @@ public class SourceService {
         default:
           // unknown mediaType -> record an error and skip
           String unsupported = String.format("Unsupported mediaType '%s' for "
-                  + "source(title='%s', author='%s')", rawType, title, author);
+              + "source(title='%s', author='%s')", rawType, title, author);
           errors.add(unsupported);
           errors.add(String.format("MediaType error (book): title='%s', author="
-                  + "'%s'", title, author));
+              + "'%s'", title, author));
+          LOGGER.warn("Skipping unsupported media type: {}", rawType);
           continue;
       }
 

@@ -2,12 +2,20 @@ package com.columbia.coms4156.citationservice.service;
 
 import com.columbia.coms4156.citationservice.model.Book;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class GoogleBooksService {
+
+    /**
+     * Logger for this class.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(GoogleBooksService.class);
 
     /**
      * WebClient for making HTTP requests to the Google Books API.
@@ -25,8 +33,8 @@ public class GoogleBooksService {
      * @param apiKey Google Books API key.
      */
     public GoogleBooksService(WebClient.Builder webClientBuilder,
-                              @Value("${google.books.api.base-url}") String baseUrl,
-                              @Value("${google.books.api.key}") String apiKey) {
+            @Value("${google.books.api.base-url}") String baseUrl,
+            @Value("${google.books.api.key}") String apiKey) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
         this.googleBooksApiKey = apiKey;
     }
@@ -41,16 +49,32 @@ public class GoogleBooksService {
             return Mono.empty();
         }
 
+        LOGGER.info("Fetching book data from Google Books API for ISBN: {}", isbn);
+
         return webClient.get()
-                .uri(uriBuilder ->
-                        uriBuilder.path("")
-                                .queryParam("q", "isbn:" + isbn)
-                                .queryParam("key", googleBooksApiKey)
-                                .build())
+                .uri(uriBuilder -> uriBuilder.path("/volumes")
+                        .queryParam("q", "isbn:" + isbn)
+                        .queryParam("key", googleBooksApiKey) // Preserving the API key
+                        .build())
                 .retrieve()
+                .onStatus(status -> status.value() == HttpStatus.NOT_FOUND.value(),
+                        response -> {
+                            LOGGER.warn("Google Books API returned 404 for ISBN: {}", isbn);
+                            return Mono.empty();
+                        })
                 .bodyToMono(GoogleBooksApiResponse.class)
-                .flatMap(apiResponse ->
-                        parseGoogleBooksApiResponse(apiResponse, isbn));
+                .flatMap(apiResponse -> {
+                    if (apiResponse.getTotalItems() == 0) {
+                        LOGGER.info("Google Books API returned 0 items for ISBN: {}", isbn);
+                        return Mono.empty();
+                    }
+                    LOGGER.info("Successfully fetched book data for ISBN: {}", isbn);
+                    return parseGoogleBooksApiResponse(apiResponse, isbn);
+                })
+                .onErrorResume(e -> {
+                    LOGGER.error("Error fetching data from Google Books API for ISBN: {}", isbn, e);
+                    return Mono.empty();
+                });
     }
 
     private Mono<Book> parseGoogleBooksApiResponse(
@@ -103,9 +127,32 @@ public class GoogleBooksService {
     // Inner classes to map the Google Books API response structure
     private static class GoogleBooksApiResponse {
         /**
+         * Total number of items found.
+         */
+        private int totalItems;
+
+        /**
          * List of items returned by the API.
          */
         private java.util.List<Item> items;
+
+        /**
+         * Gets the total number of items.
+         *
+         * @return The total number of items.
+         */
+        public int getTotalItems() {
+            return totalItems;
+        }
+
+        /**
+         * Sets the total number of items.
+         *
+         * @param pTotalItems The total number of items.
+         */
+        public void setTotalItems(int pTotalItems) {
+            this.totalItems = pTotalItems;
+        }
 
         /**
          * Gets the list of items.
