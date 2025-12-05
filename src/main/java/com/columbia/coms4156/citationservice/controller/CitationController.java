@@ -26,7 +26,9 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * REST Controller for Citation creation API endpoints.
  * Provides endpoints for citation generation for various source types and styles.
- * Currently supports MLA format for books, videos, and articles.
+ * Currently, supports ad-hoc MLA format generation for books, videos, and articles
+ * w/o backfill functionality. For style & backfill selection,
+ * see the /{citationId} & /group/{submissionId} endpoints below.
  */
 @RestController
 @RequestMapping("/api/cite")
@@ -69,6 +71,20 @@ public class CitationController {
     if (style == null || style.trim().isEmpty()) {
       throw new ValidationException(
           "Citation style cannot be null or empty. Supported styles: MLA, APA, CHICAGO");
+    }
+  }
+
+  /**
+   * Validates that a mediaType parameter is not null or empty.
+   *
+   * @param mediaType the media type to validate
+   * @throws ValidationException if the media type is invalid
+   */
+  private void validateMediaType(String mediaType) {
+    if (mediaType == null || mediaType.trim().isEmpty()) {
+      throw new ValidationException(
+              "Citation media type cannot be null or empty. "
+                      + "Supported media types: Book, Video, Article");
     }
   }
 
@@ -151,7 +167,7 @@ public class CitationController {
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if video not found, or HTTP 500 if an error occurs
    */
-  @PostMapping("/video/citation")
+  @PostMapping("/video")
   public ResponseEntity<?> generateVideoCitationFromData(
       @Valid @RequestBody Video video,
       @RequestParam(defaultValue = "MLA") String style,
@@ -176,7 +192,7 @@ public class CitationController {
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if article is not found, or HTTP 500 if an error occurs
    */
-  @GetMapping("/article/{id}/citation")
+  @GetMapping("/article/{id}")
   public ResponseEntity<?> generateArticleCitation(@PathVariable Long id,
                                                    HttpServletRequest request) {
     validateId(id, "Article");
@@ -199,7 +215,7 @@ public class CitationController {
    * @return ResponseEntity containing the MLA citation string with HTTP 200 status if successful,
    * HTTP 404 with error message if article not found, or HTTP 500 if an error occurs
    */
-  @PostMapping("/article/citation")
+  @PostMapping("/article")
   public ResponseEntity<?> generateArticleCitationFromData(
       @Valid @RequestBody Article article,
       @RequestParam(defaultValue = "MLA") String style,
@@ -217,32 +233,36 @@ public class CitationController {
 
   // --- General Use Endpoints ---
   /**
-   * UPDATE NEEDED FOR NEW API FLOW
-   * Generate citation for a single source by sourceId with specified style and backfill option.
+   * Generate citation for a single source from a submission group generated
+   * from the '/api/source/sources' endpoint. This endpoint will return CitationObjects
+   * describing the media type and respective media id. You may use this information,
+   * alongside parameters to specify style and backfill options,
+   * to generate singular citations for your submitted sources.
+   * Otherwise, you may select the respective media type and generate them
+   * using the APIs above (ex. /api/cite/article/{id})
    *
-   * @param sourceId The unique identifier of the source to generate citation for
+   * @param citationId The unique identifier of the source to generate citation for.
    * @param style The citation style (MLA, APA, Chicago)
    * @param backfill Whether to include backfill information (currently not implemented)
    * @param request The HTTP request object for error context
    * @return ResponseEntity containing CitationResponse with HTTP 200 status if successful,
    * HTTP 404 with error message if source not found, or HTTP 400 if invalid parameters
    */
-  @GetMapping("/source/{sourceId}")
+  @GetMapping("/{citationId}")
   public ResponseEntity<?> generateCitationForSource(
-      @PathVariable Long sourceId,
+      @PathVariable Long citationId,
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill,
       HttpServletRequest request) {
-    validateId(sourceId, "Source");
+    validateId(citationId, "CitationId");
     validateStyle(style);
 
     CitationResponse response = citationService.generateCitationForSource(
-        sourceId, style, backfill);
+            citationId, style, backfill);
     return ResponseUtil.ok(response);
   }
 
   /**
-   * UPDATE NEEDED FOR NEW API FLOW
    * Generate citations for all sources in a submission group.
    *
    * @param submissionId The unique identifier of the submission group

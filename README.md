@@ -11,6 +11,33 @@ Authors:
 
 To view the original project proposal, click [here](https://docs.google.com/document/d/1V7UUUKATDx-as5N2krsXF6NSkbQoo0iBBf0t164SlHI/edit?usp=sharing).
 
+## Client Application
+
+A **Python-based University Library Citation Client** is included in this repository to demonstrate the practical usage of our Citation Service API. The client simulates a university library management system where students and faculty can generate citations for required course readings.
+
+**Location:** `client/` directory in this repository
+
+**Features:**
+- Interactive web interface showing course required readings
+- Real-time citation generation in MLA, APA, and Chicago formats
+- Integration with the Citation Service API
+- Support for books, articles, and videos
+
+**Quick Start:**
+```bash
+# Start the Citation Service (Terminal 1)
+mvn spring-boot:run
+
+# Start the Client Application (Terminal 2)
+cd client
+pip install -r requirements.txt
+python app.py
+```
+
+Visit `http://localhost:5000` to access the client interface.
+
+For detailed client setup and usage instructions, see the [Client README](client/README.md).
+
 ## Current Features
 
 - **Multi-Style Citation Generation**: Supports MLA, APA, and Chicago citation formats
@@ -36,40 +63,72 @@ To view the original project proposal, click [here](https://docs.google.com/docu
 src/
 ├── main/
 │   ├── java/com/columbia/coms4156/citationservice/
-│   │   ├── CitationServiceApplication.java         # Main application
+│   │   ├── `CitationServiceApplication.java`
 │   │   ├── controller/                             # API Endpoints
-│   │   │   ├── CitationController.java
-│   │   │   └── SourceController.java
-│   │   ├── model/                               
-│   │   │   ├── Article.java
-│   │   │   ├── Book.java
-│   │   │   ├── Citation.java
-│   │   │   ├── Source.java
-│   │   │   ├── Submission.java
-│   │   │   ├── User.java
-│   │   │   └── Video.java
+│   │   │   ├── `CitationController.java`           # endpoints updated (e.g. GET /api/cite/{citationId})
+│   │   │   ├── `SourceController.java`             # POST /api/source/sources, etc.
+│   │   │   └── dto/
+│   │   │       ├── `BulkSourceRequest.java`
+│   │   │       └── `SourceBatchResponse.java`      # field renamed: `citationIds` (was `sourceIds`)
+│   │   ├── exception/
+│   │   │   ├── `GlobalExceptionHandler.java`
+│   │   │   ├── `ResourceNotFoundException.java`
+│   │   │   └── `ValidationException.java`
+│   │   ├── model/
+│   │   │   ├── `Article.java`
+│   │   │   ├── `Book.java`
+│   │   │   ├── `Citation.java`
+│   │   │   ├── `Source.java`
+│   │   │   ├── `Submission.java`
+│   │   │   ├── `User.java`
+│   │   │   └── `Video.java`
 │   │   ├── repository/                             # Database Method Management
-│   │   │   ├── ArticleRepository.java
-│   │   │   ├── BookRepository.java
-│   │   │   ├── CitationRepository.java
-│   │   │   ├── SubmissionRepository.java
-│   │   │   ├── UserRepository.java
-│   │   │   └── VideoRepository.java
+│   │   │   ├── `ArticleRepository.java`
+│   │   │   ├── `BookRepository.java`
+│   │   │   ├── `CitationRepository.java`
+│   │   │   ├── `SubmissionRepository.java`
+│   │   │   ├── `UserRepository.java`
+│   │   │   └── `VideoRepository.java`
 │   │   ├── service/                                # Backend Logic
-│   │   │   ├── CitationService.java
-│   │   │   └── SourceService.java
+│   │   │   ├── `CitationService.java`
+│   │   │   ├── `CrossRefDoiService.java`          # CrossRef API for article backfill using DOI
+│   │   │   ├── `GoogleBooksService.java`          # Google API for book backfill using ISBN
+│   │   │   └── `SourceService.java`
 │   │   └── utils/
-│   │       └──DatabaseStartupCheck.java           # Checks database connection
+│   │       └── `DatabaseStartupCheck.java`        # Checks database connection
 │   └── resources/
-│       ├── application.properties
-│       └── (local) application-dev.properties  # NOT committed — see DB section
+│       ├── `application.properties`
+│       └── `(local) application-dev.properties`   # NOT committed — see 'Running the Application'
 └── test/
     └── java/com/columbia/coms4156/citationservice/
+        ├── controller/
+        │   ├── CitationControllerIntegrationTest.java
+        │   ├── CitationControllerTest.java
+        │   └── SourceControllerTest.java
+        │
+        ├── model/
+        │   ├── ArticleTest.java
+        │   ├── BookTest.java
+        │   ├── CitationResponseTest.java
+        │   ├── CitationTest.java
+        │   ├── ErrorResponseTest.java
+        │   ├── GroupCitationResponseTest.java
+        │   ├── SourceTest.java
+        │   ├── SubmissionTest.java
+        │   ├── UserTest.java
+        │   └── VideoTest.java
+        │
+        ├── service/
+        │   ├── CitationServiceTest.java
+        │   ├── CrossRefDoiServiceTest.java
+        │   ├── GoogleBooksServiceTest.java
+        │   └── SourceServiceTest.java
+        │
         └── CitationServiceApplicationTests.java
 ```
 
 ## Class and Database Design
-See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design. Read up on the reasoning for why certain classes are there before creating the rest of the endpoints.
+See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
 
 ## Getting Started
 
@@ -117,63 +176,81 @@ See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit)
 
 ### SourceController
 
-| Method | Endpoint                   | Description             | Input                                                                               | Output                            |
-|--------|----------------------------|-------------------------|-------------------------------------------------------------------------------------|-----------------------------------|
-| POST   | `/api/source/book`         | Create a new Book       | Book JSON (title*, author*, publisher, publicationYear, city, edition, isbn)        | Book object with generated ID     |
-| GET    | `/api/source/book`         | Get all Books           | None                                                                                | List of Book objects              |
-| GET    | `/api/source/book/{id}`    | Get a Book by ID        | Path param: id (Long)                                                               | Book object or 404                |
-| PUT    | `/api/source/book/{id}`    | Update a Book           | Path param: id (Long), Book JSON                                                    | Updated Book object or 404        |
-| DELETE | `/api/source/book/{id}`    | Delete a Book           | Path param: id (Long)                                                               | 204 No Content or 404             |
-| POST   | `/api/source/video`        | Create a new Video      | Video JSON (title*, author*, director, durationSeconds, platform, url, releaseYear) | Video object with generated ID    |
-| GET    | `/api/source/video`        | Get all Videos          | None                                                                                | List of Video objects             |
-| GET    | `/api/source/video/{id}`   | Get a Video by ID       | Path param: id (Long)                                                               | Video object or 404               |
-| PUT    | `/api/source/video/{id}`   | Update a Video          | Path param: id (Long), Video JSON                                                   | Updated Video object or 404       |
-| DELETE | `/api/source/video/{id}`   | Delete a Video          | Path param: id (Long)                                                               | 204 No Content or 404             |
-| POST   | `/api/source/article`      | Create a new Article    | Article JSON (title*, author*, journal, volume, issue, pages, doi, publicationYear) | Article object with generated ID  |
-| GET    | `/api/source/article`      | Get all Articles        | None                                                                                | List of Article objects           |
-| GET    | `/api/source/article/{id}` | Get an Article by ID    | Path param: id (Long)                                                               | Article object or 404             |
-| PUT    | `/api/source/article/{id}` | Update an Article       | Path param: id (Long), Article JSON                                                 | Updated Article object or 404     |
-| DELETE | `/api/source/article/{id}` | Delete an Article       | Path param: id (Long)                                                               | 204 No Content or 404             |
-| POST   | `/api/source/sources`      | Create multiple sources | Query param: submissionId (long) (optional)                                         | List of SourceIDs (to be changed) |
+| Method | Endpoint                   | Description             | Input                                                                               | Output                                                                                 |
+|--------|----------------------------|-------------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| POST   | `/api/source/book`         | Create a new Book       | Book JSON (title*, author*, publisher, publicationYear, city, edition, isbn)        | 201 CREATED w/ Book object with generated ID or 404 BAD REQUEST                        |
+| GET    | `/api/source/book`         | Get all Books           | None                                                                                | 200 OK w/ List of Book objects or 404 ERROR                                            |
+| GET    | `/api/source/book/{id}`    | Get a Book by ID        | Path param: id (Long)                                                               | 200 OK w/ Book object or 404 ERROR                                                     |
+| PUT    | `/api/source/book/{id}`    | Update a Book           | Path param: id (Long), Book JSON                                                    | 200 OK w/ Updated Book object or 404 ERROR                                             |
+| DELETE | `/api/source/book/{id}`    | Delete a Book           | Path param: id (Long)                                                               | 204 No Content or 404 NOT FOUND                                                        |
+| POST   | `/api/source/video`        | Create a new Video      | Video JSON (title*, author*, director, durationSeconds, platform, url, releaseYear) | 201 CREATED w/ Video object with generated ID or 404 BAD REQUEST                       |
+| GET    | `/api/source/video`        | Get all Videos          | None                                                                                | 200 OK w/ List of Video objects or 404 ERROR                                           |
+| GET    | `/api/source/video/{id}`   | Get a Video by ID       | Path param: id (Long)                                                               | 200 OK w/ Video object or 404 ERROR                                                    |
+| PUT    | `/api/source/video/{id}`   | Update a Video          | Path param: id (Long), Video JSON                                                   | 200 OK w/ Updated Video object or 404 ERROR                                            |
+| DELETE | `/api/source/video/{id}`   | Delete a Video          | Path param: id (Long)                                                               | 204 No Content or 404 NOT FOUND                                                        |
+| POST   | `/api/source/article`      | Create a new Article    | Article JSON (title*, author*, journal, volume, issue, pages, doi, publicationYear) | 201 CREATED w/ Article object with generated ID or 404 BAD REQUEST                     |
+| GET    | `/api/source/article`      | Get all Articles        | None                                                                                | 200 OK w/ List of Article objects or 404 ERROR                                         |
+| GET    | `/api/source/article/{id}` | Get an Article by ID    | Path param: id (Long)                                                               | 200 OK w/ Article object or 404 ERROR                                                  |
+| PUT    | `/api/source/article/{id}` | Update an Article       | Path param: id (Long), Article JSON                                                 | 200 OK w/ Updated Article object or 404 ERROR                                          |
+| DELETE | `/api/source/article/{id}` | Delete an Article       | Path param: id (Long)                                                               | 204 NO CONTENT or 404 NOT FOUND                                                        |
+| POST   | `/api/source/sources`      | Create multiple sources | Query param: submissionId (long) (optional)                                         | 201 CREATED w/ SubmissionId and List of citationIds for each source or 404 BAD REQUEST |
 
 *Required fields
 
 ### CitationController
-| Method | Endpoint                          | Description                                                           | Input                                                                                            | Output                     |
-|--------|-----------------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|----------------------------|
-| GET    | `/api/cite/book/{id}`             | Generate MLA citation for a stored Book by ID                         | Path param: id (Long)                                                                            | Citation string or 404     |
-| POST   | `/api/cite/book`                  | Generate MLA citation from provided Book JSON (no save)               | Book JSON + Query param: style (default: "MLA")                                                  | Citation string            |
-| GET    | `/api/cite/video/{id}`            | Generate MLA citation for a stored Video by ID                        | Path param: id (Long)                                                                            | Citation string or 404     |
-| POST   | `/api/cite/video/citation`        | Generate MLA citation from provided Video JSON (no save)              | Video JSON + Query param: style (default: "MLA")                                                 | Citation string            |
-| GET    | `/api/cite/article/{id}/citation` | Generate MLA citation for a stored Article by ID                      | Path param: id (Long)                                                                            | Citation string or 404     |
-| POST   | `/api/cite/article/citation`      | Generate MLA citation from provided Article JSON (no save)            | Article JSON + Query param: style (default: "MLA")                                               | Citation string            |
-| GET    | `/api/cite/source/{sourceId}`     | Generate citation for a single source with style and backfill options | Path param: sourceId (Long), Query params: style (default: "MLA"), backfill (default: false)     | CitationResponse JSON      |
-
-[//]: # (| GET    | `/api/cite/group/{submissionId}`  | Generate citations for all sources in a submission group              | Path param: submissionId &#40;Long&#41;, Query params: style &#40;default: "MLA"&#41;, backfill &#40;default: false&#41; | GroupCitationResponse JSON |)
-[//]: # (Above API endpoint is broken -- Submission not properly created. TODO for iteration 2)
+| Method | Endpoint                       | Description                                                           | Input                                                                                            | Output                                                |
+|--------|--------------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| GET    | `/api/cite/book/{id}`          | Generate MLA citation for a stored Book by ID                         | Path param: id (Long)                                                                            | 200 OK w/ Citation string or 404 NOT FOUND            |
+| POST   | `/api/cite/book`               | Generate MLA citation from provided Book JSON (no save)               | Book JSON + Query param: style (default: "MLA")                                                  | 200 OK w/ Citation string or 404 BAD REQUEST          |
+| GET    | `/api/cite/video/{id}`         | Generate MLA citation for a stored Video by ID                        | Path param: id (Long)                                                                            | 200 OK w/ Citation string or 404 NOT FOUND            |
+| POST   | `/api/cite/video`       | Generate MLA citation from provided Video JSON (no save)              | Video JSON + Query param: style (default: "MLA")                                                 | 200 OK w/ Citation string or 404 BAD REQUEST          |
+| GET    | `/api/cite/article/{id}` | Generate MLA citation for a stored Article by ID                      | Path param: id (Long)                                                                            | 200 OK w/ Citation string or 404 NOT FOUND            |
+| POST   | `/api/cite/article`    | Generate MLA citation from provided Article JSON (no save)            | Article JSON + Query param: style (default: "MLA")                                               | 200 OK w/ Citation string or 404 BAD REQUEST          |
+| GET    | `/api/cite/{citationId}`  | Generate citation for a single source with style and backfill options | Path param: citationId (Long), Query params: style (default: "MLA"), backfill (default: false)     | 200 OK w/ CitationResponse JSON or 404 NOT FOUND      |
+| GET    | `/api/cite/group/{submissionId}`  | Generate citations for all sources in a submission group              | Path param: submissionId (Long), Query params: style (default: "MLA"), backfill (default: false) | 200 OK w/ GroupCitationResponse JSON or 404 NOT FOUND |
 
 ## API Usage
-This section outlines the structure of data to be passed in through the body of a POST request, as well as some sample JSON responses for common requests.
+This section outlines the most important API endpoints for our project. It will outline a series a API endpoints you can use to view all available sources, how to upload your own sources, and how to cite sources from the available list or the sources that you uploaded yourself (with the option of backfilling or specific style selection. 
+**Note:** Backfill capabilities are only available for sources that are uploaded through the **POST** `http://localhost:8080/api/source/sources`, as a `citationId` is needed.
 `<sourcetype>` can be replaced with any of the following sources: `book`, `video`, `article`. The source data (if needed) should be included in the body of the request using the [Source Object JSON Schemas](#source-object-json-schemas) documentation below.
 
-### SourceController API Examples
+### SourceController API Examples: Uploading or finding a source to cite
 
-**POST** `http://localhost:8080/api/source/<sourcetype>`   
-Request Body (with `<sourcetype> = Book`)
+**POST** `http://localhost:8080/api/source/<sourcetype>`
+- Takes in a source object and saves it to the database. Returns the ID of the object.      
+
+**Request Body (with `<sourcetype> = Book`)**
 ```json
 {
-  "title": "To Kill a Mockingbird", // REQUIRED
-  "author": "Harper Lee", // REQUIRED
-  "publisher": "J.B. Lippincott & Co.",
-  "publicationYear": 1960,
-  "city": "Philadelphia",
-  "edition": "1st",
-  "isbn": "12sf245fsna34f9" 
+  "title": "Neural Networks for Humans",
+  "author": "Andrew Ng",
+  "publisher": "DeepLearning Media",
+  "publicationYear": 2023,
+  "city": "San Francisco",
+  "edition": "2nd",
+  "isbn": "9789876543002"
+}
+```
+- Returns the created source object (in this case, a Book), with the ID.
+
+**Response**
+```json
+{
+    "id": 73,
+    "title": "Neural Networks for Humans",
+    "author": "Andrew Ng",
+    "publisher": "DeepLearning Media",
+    "publicationYear": 2023,
+    "city": "San Francisco",
+    "edition": "2nd",
+    "isbn": "9789876543002"
 }
 ```
 
-**GET** `http://localhost:8080/api/source/<sourcetype>`   
-Response
+**GET** `http://localhost:8080/api/source/<sourcetype>`  
+- Retrieves all the sources in the databse of this source type.
+
+**Response**:
 ```json
 [
   {
@@ -193,8 +270,10 @@ Response
 ]
 ```
 
-**POST** `http://localhost:8080/api/source/sources`   
-Request Body
+**POST** `http://localhost:8080/api/source/sources`  
+- Upload one or more sources to the database. Will create a submission object with a "submissionId" that you can use to refer to these sources later. The submission object will hold citationIds, which can be used to cite the sources you uploaded.
+
+**Request Body:**
 ```json
 {
   "user": { 
@@ -224,22 +303,25 @@ Request Body
   ]
 }
 ```
-Response
+
+**Response**
 ```json
 {
     "submissionId": 75,
-    "sourceIds": [
-        "107",
-        "108"
+    "citationIds": [
+        "107", // CitationId for "Deep Learning with Python". 
+        "108"  // CitationId for "Understanding Neural Networks"
     ],
     "errors": []
 }
 ```
 
-### CitationController API Examples
+### CitationController API: Creating your citations
 
-**POST** `http://localhost:8080/api/cite/book`
-Request Body (with `<sourcetype> = Book`)
+**POST** `http://localhost:8080/api/cite/<sourcetype>`
+- Retrieve the ad-hoc generation of a citation.
+
+**Request Body (with `<sourcetype> = Book`)**
 ```json
 {
   "title": "1984",
@@ -249,65 +331,47 @@ Request Body (with `<sourcetype> = Book`)
   "city": "London"
 }
 ```
+
 **Response:**
 ```
 Orwell, George. _1984_. Secker & Warburg, 1949.
 ```
 
-The APIs below will be edited based on the specifications linked in [Next Steps](#next-steps)     
-
-**GET** `http://localhost:8080/api/cite/source/{sourceId}?style=APA&backfill=false`
-
-Generate a citation for a single source with specified style and backfill options.
+**GET** `http://localhost:8080/api/cite/{citationId}?style=APA&backfill=true`
+- Generate a citation for a single source with specified style and backfill options. The citationId can be retrieved when uploading sources using the **POST** `http://localhost:8080/api/source/sources` endpoint.
 
 **Parameters:**
-- `sourceId` (path): The unique identifier of the source
+- `citationId` (path): The unique identifier of the citation object.
+- `style` (query, optional): Citation style - "MLA", "APA", or "Chicago" (default: "MLA")
+- `backfill` (query, optional): Boolean for whether to include backfill information (default: false)
+
+**Response:**
+- Where `{citationId}` = 180
+```json
+{
+  "CitationID": "180",
+  "CitationString": "Sarker, Iqbal. \"Machine Learning: Algorithms, Real-World Applications and Research Directions.\" SN Computer Science, vol. 2, no. 3, 2021."
+}
+```
+
+**GET** `http://localhost:8080/api/cite/group/{submissionId}?style=Chicago&backfill=false`
+- Generate citations for all sources in a submission group. The submissionId can be retrieved when uploading sources using the **POST** `http://localhost:8080/api/source/sources` endpoint.
+
+**Parameters:**
+- `submissionId` (path): The unique identifier of the submission group
 - `style` (query, optional): Citation style - "MLA", "APA", or "Chicago" (default: "MLA")
 - `backfill` (query, optional): Whether to include backfill information (default: false)
 
 **Response:**
 ```json
 {
-  "CitationID": "123",
-  "CitationString": "Orwell, G. (1949). 1984. Secker & Warburg, London."
+  "submissionId": 456,
+  "Citations": {
+    "123": "Orwell, George. \"1984.\" London: Secker & Warburg, 1949.",
+    "124": "Lee, Harper. \"To Kill a Mockingbird.\" Philadelphia: J.B. Lippincott & Co., 1960."
+  }
 }
 ```
-
-[//]: # (TODO: Fix this documentation once API is fixed in iteration 2.)
-[//]: # (**GET** `http://localhost:8080/api/cite/group/{submissionId}?style=Chicago&backfill=false`)
-
-[//]: # ()
-[//]: # (Generate citations for all sources in a submission group.)
-
-[//]: # ()
-[//]: # (**Parameters:**)
-
-[//]: # (- `submissionId` &#40;path&#41;: The unique identifier of the submission group)
-
-[//]: # (- `style` &#40;query, optional&#41;: Citation style - "MLA", "APA", or "Chicago" &#40;default: "MLA"&#41;)
-
-[//]: # (- `backfill` &#40;query, optional&#41;: Whether to include backfill information &#40;default: false&#41;)
-
-[//]: # ()
-[//]: # (**Response:**)
-
-[//]: # (```json)
-
-[//]: # ({)
-
-[//]: # (  "submissionId": 456,)
-
-[//]: # (  "Citations": {)
-
-[//]: # (    "123": "Orwell, George. \"1984.\" London: Secker & Warburg, 1949.",)
-
-[//]: # (    "124": "Lee, Harper. \"To Kill a Mockingbird.\" Philadelphia: J.B. Lippincott & Co., 1960.")
-
-[//]: # (  })
-
-[//]: # (})
-
-[//]: # (```)
 
 ### Source Object JSON Schemas
 This is the format of JSON objects to be submitted with the various requests above in the Body of the request. All attributes for these objects are optional except for `author` and `title`.
@@ -322,7 +386,7 @@ This is the format of JSON objects to be submitted with the various requests abo
   "publicationYear": "number (optional)",
   "city": "string (optional)",
   "edition": "string (optional)",
-  "isbn": "string (optional)"
+  "isbn": "string (optional)" // Required for backfill capabilities
 }
 ```
 
@@ -351,10 +415,14 @@ This is the format of JSON objects to be submitted with the various requests abo
   "issue": "string (optional)",
   "pages": "string (optional)",
   "publicationYear": "number (optional)",
-  "doi": "string (optional)",
+  "doi": "string (optional)", // Required for backfill capabilities
   "url": "string (optional)"
 }
 ```
+
+### Backfilling
+Backfilling is currently available for the Books and Articles. Books are backfilled using the external API, [Google Books API](https://developers.google.com/books) and Articles are backfilled using the external API, [CrossRef API](https://api.crossref.org/swagger-ui/index.html). Book sources that you desire to be backfilled must include an ISBN, and Article sources must include a DOI.
+
 ## Testing with Postman
 These are API tests you can use to exercise the service endpoints (create, retrieve, update, delete sources and generate citations).
 
@@ -384,6 +452,12 @@ We used Checkstyle to ensure code quality and adherence to coding standards. The
 mvn checkstyle:check
 ```
 
+### Logging
+We use **SLF4J** with **Logback** for logging. Logs are persisted to the `logs/` directory in the project root.
+- **File**: `logs/application.log`
+- **Rotation**: Daily rotation with a 30-day history and 3GB total size cap.
+- **Configuration**: `src/main/resources/logback-spring.xml`
+
 ### AI Usage
 For this project, we used GitHub Copilot to assist with code generation and troubleshooting. GitHub Copilot is freely available for students through the [GitHub Student Developer Pack](https://education.github.com/pack).
 
@@ -396,14 +470,10 @@ For brevity, our use cases are summarized in the table below. While not every pr
 | Set up parameter validation and unit testing for model layer | "Set up basic parameter validation in this class for the setter methods and then create a unit test file for the class which tests the setting methods"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Helped set up parameter validation and unit tests for model layer classes.           | Book.java, BookTest.java, Video.java, VideoTest.java, Article.java, ArticleTest.java, etc      |
 | PR Description                                               | "Please help me write a detailed PR description for the following code changes: ...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Created a comprehensive PR description outlining the changes made.                   | N/A (Documentation)                                                                            |
 | Fixing Checkstyle Errors/Updating Checkstyle Config          | "Help fix the checkstyle errors in this file: ... Also, please update the checkstyle configuration file to allow for longer line lengths (up to 100 characters)", "What script can fix the trailing spaces and line length issues in the controllers?"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Resolved Checkstyle errors and updated configuration as requested.                   | Multiple Java files and checkstyle.xml                                                         |
+| Updating README                                              | "Update the file structure in the README"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | New file structure as seen above.                                                    | README.md                                                                                      |
+
 
 ## Next Steps
-Currently, the service supports basic citation generation and source management. Before the first demo, the team will be refactoring the APIs
-to support a more flexible citation generation mechanism that allows for backfilling missing information with AI, a feature to be added in the second iteration.
-These changes will include:
-- Modifying CitationController GET endpoints to utilize Citation object according to the linked [API design](https://docs.google.com/document/d/1h68plDcqBSd3OXQ8W1byPptmb5XWFZ081d9pRdjwgis/edit?usp=sharing).
-  - `/api/cite/source/{sourceId}`
-  - `/api/cite/group/{submissionId}` (currently broken)
-- Modifying SourceController POST endpoints in the same way as above:
-  - /api/source/sources
-- Fix controller methods associated with these endpoints.
+- Add video backfilling capabilities
+- Add user authentication
+- Deployment & sample client creation

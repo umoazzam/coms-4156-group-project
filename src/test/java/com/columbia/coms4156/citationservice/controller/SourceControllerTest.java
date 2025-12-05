@@ -83,8 +83,8 @@ class SourceControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/source/sources creates a new submission and returns source ids")
-    void createNewSubmissionReturnsSourceIds() throws Exception {
+    @DisplayName("POST /api/source/sources creates a new submission and returns citation IDs")
+    void createNewSubmissionReturnscitationIds() throws Exception {
         // Arrange - prepare request JSON
         BulkSourceRequest request = new BulkSourceRequest();
         UserDTO user = new UserDTO();
@@ -114,12 +114,12 @@ class SourceControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.submissionId").value(123))
-                .andExpect(jsonPath("$.sourceIds[0]").value("10"))
-                .andExpect(jsonPath("$.sourceIds[1]").value("11"));
+                .andExpect(jsonPath("$.citationIds[0]").value("10"))
+                .andExpect(jsonPath("$.citationIds[1]").value("11"));
     }
 
     @Test
-    @DisplayName("POST /api/source/sources?submissionId=222 appends to existing submission and returns source ids")
+    @DisplayName("POST /api/source/sources?submissionId=222 appends to existing submission and returns citation IDs")
     void appendToExistingSubmission() throws Exception {
         BulkSourceRequest request = new BulkSourceRequest();
         UserDTO user = new UserDTO();
@@ -140,7 +140,7 @@ class SourceControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.submissionId").value(222))
-                .andExpect(jsonPath("$.sourceIds[0]").value("55"));
+                .andExpect(jsonPath("$.citationIds[0]").value("55"));
     }
 
     @Test
