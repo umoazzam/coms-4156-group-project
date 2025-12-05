@@ -74,20 +74,6 @@ public class CitationController {
     }
   }
 
-  /**
-   * Validates that a mediaType parameter is not null or empty.
-   *
-   * @param mediaType the media type to validate
-   * @throws ValidationException if the media type is invalid
-   */
-  private void validateMediaType(String mediaType) {
-    if (mediaType == null || mediaType.trim().isEmpty()) {
-      throw new ValidationException(
-              "Citation media type cannot be null or empty. "
-                      + "Supported media types: Book, Video, Article");
-    }
-  }
-
   // --- Book Endpoints ---
   /**
    * Generate an MLA format citation for a stored book.
