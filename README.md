@@ -11,33 +11,6 @@ Authors:
 
 To view the original project proposal, click [here](https://docs.google.com/document/d/1V7UUUKATDx-as5N2krsXF6NSkbQoo0iBBf0t164SlHI/edit?usp=sharing).
 
-## Client Application
-
-A **Python-based University Library Citation Client** is included in this repository to demonstrate the practical usage of our Citation Service API. The client simulates a university library management system where students and faculty can generate citations for required course readings.
-
-**Location:** `client/` directory in this repository
-
-**Features:**
-- Interactive web interface showing course required readings
-- Real-time citation generation in MLA, APA, and Chicago formats
-- Integration with the Citation Service API
-- Support for books, articles, and videos
-
-**Quick Start:**
-```bash
-# Start the Citation Service (Terminal 1)
-mvn spring-boot:run
-
-# Start the Client Application (Terminal 2)
-cd client
-pip install -r requirements.txt
-python app.py
-```
-
-Visit `http://localhost:5000` to access the client interface.
-
-For detailed client setup and usage instructions, see the [Client README](client/README.md).
-
 ## Current Features
 
 - **Multi-Style Citation Generation**: Supports MLA, APA, and Chicago citation formats
@@ -423,13 +396,45 @@ This is the format of JSON objects to be submitted with the various requests abo
 ### Backfilling
 Backfilling is currently available for the Books and Articles. Books are backfilled using the external API, [Google Books API](https://developers.google.com/books) and Articles are backfilled using the external API, [CrossRef API](https://api.crossref.org/swagger-ui/index.html). Book sources that you desire to be backfilled must include an ISBN, and Article sources must include a DOI.
 
+## Client Application
+
+A demo client application is included in the `client` directory of this repository. This client is a simple React application built with TypeScript that demonstrates how to interact with the Citation Service API.
+
+### Client Functionality
+
+The client application simulates a university library management system for a course's "Required Readings" list. It displays a predefined list of resources (books, articles, and videos) and allows the user to generate citations for them in MLA, APA, or Chicago style.
+
+When the "Generate Citation" button is clicked for a resource, the client sends a request to the service's API. The API then processes the request and returns the formatted citation, which is then displayed on the page.
+
+### Running the Client
+
+To run the client application, navigate to the `client` directory and install the dependencies:
+
+```bash
+cd client
+npm install
+```
+
+Then, start the development server:
+
+```bash
+npm run dev
+```
+
+The client will be available at `http://localhost:5173`.
+
+### Connecting to the Service
+
+The client is configured to connect to the service API running at `http://localhost:8080`. Ensure that the main Spring Boot application is running before you start the client.
+
+The service is able to handle multiple instances of the client running simultaneously. Since the client is a stateless, frontend application, each instance maintains its own state and makes independent API calls to the service. The service processes each request without needing to differentiate between clients, as each API call is a self-contained transaction.
+
 ## Testing with Postman
 These are API tests you can use to exercise the service endpoints (create, retrieve, update, delete sources and generate citations).
 
 [Postman collection — API tests](https://web.postman.co/workspace/My-Workspace~944de483-7347-4047-89cb-e75c81e1ba7b/collection/32914220-d96cfb1c-3cc6-48fc-993f-46baea892753?action=share&source=copy-link&creator=32914220)
 
 ## Development Notes
-- CORS is enabled for all origins (development setup)
 
 ### Project Management
 For project management and task tracking, we used Notion. You can find the project board here: [T2: First Iteration Project Board](https://www.notion.so/27bb9d8608c380aaaeb7f3426296a032?v=27bb9d8608c381eab889000c5e024d6d&source=copy_link)

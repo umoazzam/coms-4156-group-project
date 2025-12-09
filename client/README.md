@@ -1,68 +1,31 @@
-# University Library Citation Client
+# Citation Service Client
 
-This is a Python client application that demonstrates the integration with the Citation Service API. The application simulates a university library management system where students and faculty can generate citations for required course readings.
+This is a simple React client application for the Citation Service API.
 
-## Features
+## What it does
 
-- **Course Reading List**: Displays a list of required readings for a course
-- **Multiple Citation Styles**: Supports MLA, APA, and Chicago citation formats
-- **Real-time Citation Generation**: Integrates with the Citation Service API to generate properly formatted citations
-- **Simple Web Interface**: Clean, user-friendly interface for easy navigation
+This client application simulates a university library management system for a course's "Required Readings" list. It displays a predefined list of resources (books, articles, and videos) and allows the user to generate citations for them in MLA, APA, or Chicago style.
 
-## Requirements
+When the "Generate Citation" button is clicked for a resource, the client sends a request to the service's API. The API then processes the request and returns the formatted citation, which is then displayed on the page.
 
-- Python 3.8+
-- Flask 3.0.0
-- Requests 2.31.0
+## How to build and run
 
-## Installation
+1.  **Install dependencies:**
+    From this directory (`client`), run:
+    ```bash
+    npm install
+    ```
 
-1. Navigate to the client directory:
-   ```bash
-   cd client
-   ```
+2.  **Run the client:**
+    ```bash
+    npm run dev
+    ```
+    The client will be available at `http://localhost:5173`.
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## How to connect to the service
 
-## Running the Application
+The client is configured to connect to the service API running at `http://localhost:8080`. Before starting the client, make sure the main Spring Boot application (the citation service) is running.
 
-1. Start the Citation Service API (from the main project directory):
-   ```bash
-   mvn spring-boot:run
-   ```
+### Handling Multiple Clients
 
-2. In a separate terminal, start the client application:
-   ```bash
-   cd client
-   python app.py
-   ```
-
-3. Open your browser and navigate to `http://localhost:5000`
-
-## Usage
-
-1. The application will display the "Required Readings" page for COMS W 4156: Advanced Software Engineering
-2. You'll see a list of required readings including books, articles, and videos
-3. For each reading, select a citation style from the dropdown (MLA, APA, or Chicago)
-4. Click "Generate Citation" to get a properly formatted citation
-5. The generated citation will appear below the reading information
-
-## API Integration
-
-The client communicates with the Citation Service API running on `http://localhost:8080` by default. You can modify the API base URL in `citation_client.py` if your service runs on a different port.
-
-## Project Structure
-
-```
-client/
-├── app.py                 # Main Flask application
-├── citation_client.py     # API client for Citation Service
-├── requirements.txt       # Python dependencies
-├── templates/            # HTML templates
-│   └── index.html
-└── static/              # Static files (CSS, JS)
-    └── style.css
-```
+The service can interface with multiple instances of this client running simultaneously. Since the client is a stateless, frontend application, each instance maintains its own state and makes independent API calls to the service. The service processes each request as a self-contained transaction and does not need to differentiate between individual client instances.
