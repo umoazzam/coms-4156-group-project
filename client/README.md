@@ -28,7 +28,64 @@ The client is configured to connect to the service API running at `http://localh
 
 ### Handling Multiple Clients
 
-The service can interface with multiple instances of this client running simultaneously. Since the client is a stateless, frontend application, each instance maintains its own state and makes independent API calls to the service. The service processes each request as a self-contained transaction and does not need to differentiate between individual client instances.
+The service can interface with multiple instances of this client running simultaneously. This is possible because both the client and the service are designed to be stateless. Each client instance manages its own state, and the server processes each API request as a self-contained transaction without needing to store session information.
+
+Here's how the code supports this:
+
+#### 1. Client-Side State Management
+
+Each instance of the React client maintains its own state independently. In `src/App.tsx`, the `useState` hook is used to manage the list of resources and their generated citations locally within the browser.
+
+```typescript
+// client/src/App.tsx
+
+function App() {
+  const [citations, setCitations] = useState<{ [key: string]: string }>({});
+  const [styles, setStyles] = useState<{ [key: string]: string }>({});
+  const [resources, setResources] = useState<Resource[]>([]);
+  // ...
+}
+```
+
+When you open the application in two different browser tabs, each tab will have its own `citations`, `styles`, and `resources` state. Changes in one tab will not affect the other.
+
+#### 2. Stateless API Calls
+
+The client makes atomic API calls that do not depend on a server-side session. Each request contains all the necessary information for the server to process it. For example, the `getCitation` function in `src/api.ts` sends the `sourceType`, `sourceId`, and `style` with every request.
+
+```typescript
+// client/src/api.ts
+
+export const getCitation = async (sourceType: string, sourceId: number, style: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/cite/${sourceType}/${sourceId}`, { params: { style } });
+    // ...
+    return response.data;
+  } catch (error) {
+    // ...
+    throw error;
+  }
+};
+```
+
+This stateless approach means the server doesn't need to track which client is making a request, as every request is independent.
+
+#### 3. Stateless and Cross-Origin Enabled API
+
+The backend is a stateless REST API. The controllers do not maintain session state between requests. Furthermore, the `@CrossOrigin(origins = "*")` annotation on the controllers, such as `CitationController`, explicitly allows requests from any origin.
+
+```java
+// src/main/java/com/columbia/coms4156/citationservice/controller/CitationController.java
+
+@RestController
+@RequestMapping("/api/cite")
+@CrossOrigin(origins = "*")
+public class CitationController {
+    // ...
+}
+```
+
+This configuration is key to allowing multiple client instances, potentially running on different machines or ports, to all interact with the same API endpoints without issue.
 
 ## End-to-End Testing
 
