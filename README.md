@@ -33,72 +33,68 @@ To view the original project proposal, click [here](https://docs.google.com/docu
 ## Project Structure
 
 ```
-src/
-├── main/
-│   ├── java/com/columbia/coms4156/citationservice/
-│   │   ├── `CitationServiceApplication.java`
-│   │   ├── controller/                             # API Endpoints
-│   │   │   ├── `CitationController.java`           # endpoints updated (e.g. GET /api/cite/{citationId})
-│   │   │   ├── `SourceController.java`             # POST /api/source/sources, etc.
-│   │   │   └── dto/
-│   │   │       ├── `BulkSourceRequest.java`
-│   │   │       └── `SourceBatchResponse.java`      # field renamed: `citationIds` (was `sourceIds`)
-│   │   ├── exception/
-│   │   │   ├── `GlobalExceptionHandler.java`
-│   │   │   ├── `ResourceNotFoundException.java`
-│   │   │   └── `ValidationException.java`
-│   │   ├── model/
-│   │   │   ├── `Article.java`
-│   │   │   ├── `Book.java`
-│   │   │   ├── `Citation.java`
-│   │   │   ├── `Source.java`
-│   │   │   ├── `Submission.java`
-│   │   │   ├── `User.java`
-│   │   │   └── `Video.java`
-│   │   ├── repository/                             # Database Method Management
-│   │   │   ├── `ArticleRepository.java`
-│   │   │   ├── `BookRepository.java`
-│   │   │   ├── `CitationRepository.java`
-│   │   │   ├── `SubmissionRepository.java`
-│   │   │   ├── `UserRepository.java`
-│   │   │   └── `VideoRepository.java`
-│   │   ├── service/                                # Backend Logic
-│   │   │   ├── `CitationService.java`
-│   │   │   ├── `CrossRefDoiService.java`          # CrossRef API for article backfill using DOI
-│   │   │   ├── `GoogleBooksService.java`          # Google API for book backfill using ISBN
-│   │   │   └── `SourceService.java`
-│   │   └── utils/
-│   │       └── `DatabaseStartupCheck.java`        # Checks database connection
-│   └── resources/
-│       ├── `application.properties`
-│       └── `(local) application-dev.properties`   # NOT committed — see 'Running the Application'
-└── test/
-    └── java/com/columbia/coms4156/citationservice/
-        ├── controller/
-        │   ├── CitationControllerIntegrationTest.java
-        │   ├── CitationControllerTest.java
-        │   └── SourceControllerTest.java
-        │
-        ├── model/
-        │   ├── ArticleTest.java
-        │   ├── BookTest.java
-        │   ├── CitationResponseTest.java
-        │   ├── CitationTest.java
-        │   ├── ErrorResponseTest.java
-        │   ├── GroupCitationResponseTest.java
-        │   ├── SourceTest.java
-        │   ├── SubmissionTest.java
-        │   ├── UserTest.java
-        │   └── VideoTest.java
-        │
-        ├── service/
-        │   ├── CitationServiceTest.java
-        │   ├── CrossRefDoiServiceTest.java
-        │   ├── GoogleBooksServiceTest.java
-        │   └── SourceServiceTest.java
-        │
-        └── CitationServiceApplicationTests.java
+coms-4156-group-project/
+├── checkstyle.xml
+├── pom.xml
+├── README.md
+├── t2-branch-coverage-report.html
+├── client/
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── README.md
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vite.config.ts
+│   ├── public/
+│   │   └── vite.svg
+│   └── src/
+│       ├── api.ts
+│       ├── App.css
+│       ├── App.tsx
+│       ├── index.css
+│       ├── main.tsx
+│       └── assets/
+│           └── react.svg
+├── src/
+│   ├── main/
+│   │   ├── java/com/columbia/coms4156/citationservice/
+│   │   │   ├── CitationServiceApplication.java
+│   │   │   ├── config/
+│   │   │   ├── controller/
+│   │   │   │   ├── CitationController.java
+│   │   │   │   ├── SourceController.java
+│   │   │   │   └── dto/
+│   │   │   ├── exception/
+│   │   │   ├── model/
+│   │   │   ├── repository/
+│   │   │   ├── service/
+│   │   │   └── utils/
+│   │   └── resources/
+│   │       ├── application-dev.properties
+│   │       ├── application.properties
+│   │       └── logback-spring.xml
+│   └── test/
+│       ├── java/com/columbia/coms4156/citationservice/
+│       │   ├── CitationServiceApplicationTests.java
+│       │   ├── controller/
+│       │   ├── model/
+│       │   └── service/
+│       └── resources/
+│           └── application-test.properties
+├── target/
+│   ├── checkstyle-cachefile
+│   ├── checkstyle-checker.xml
+│   ├── checkstyle-result.xml
+│   ├── classes/
+│   ├── generated-sources/
+│   ├── generated-test-sources/
+│   ├── maven-status/
+│   └── test-classes/
 ```
+
+This structure includes both backend (Spring Boot) and frontend (React/TypeScript) code, configuration files, resources, and build artifacts. Subfolders under `src/main/java/com/columbia/coms4156/citationservice/` include controllers, models, repositories, services, exceptions, and utilities. The `client` directory contains the React client app. The `target` directory contains build outputs and reports.
 
 ## Class and Database Design
 See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
@@ -282,8 +278,8 @@ This section outlines the most important API endpoints for our project. It will 
 {
     "submissionId": 75,
     "citationIds": [
-        "107", // CitationId for "Deep Learning with Python". 
-        "108"  // CitationId for "Understanding Neural Networks"
+        "107",
+        "108"
     ],
     "errors": []
 }
@@ -346,6 +342,43 @@ Orwell, George. _1984_. Secker & Warburg, 1949.
 }
 ```
 
+## Error Codes
+
+The API uses standard HTTP status codes to indicate the success or failure of a request. Here is a summary of the error codes the API can return:
+
+| Status Code | Error                               | Description                                                                                                                                 |
+|-------------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 400         | Bad Request                         | The server cannot or will not process the request due to something that is perceived to be a client error (e.g., malformed request syntax). |
+| 404         | Not Found                           | The server cannot find the requested resource. This can happen if you request a source or citation with an ID that does not exist.            |
+| 405         | Method Not Allowed                  | The request method is known by the server but is not supported by the target resource.                                                      |
+| 415         | Unsupported Media Type              | The server is refusing to accept the request because the payload format is in an unsupported format.                                        |
+| 500         | Internal Server Error               | The server has encountered a situation it doesn't know how to handle.                                                                       |
+
+### 400 Bad Request
+
+A `400 Bad Request` error can occur for several reasons:
+
+-   **Malformed JSON**: The request body is not valid JSON.
+-   **Validation Error**: The request body is missing required fields or contains invalid values. For example, submitting a book without a `title` or `author`.
+-   **Illegal Argument**: An argument provided in the request is invalid. For example, providing an invalid citation style.
+-   **Method Argument Type Mismatch**: A path variable or request parameter is of the wrong type. For example, providing a string for a source ID that should be a number.
+
+### 404 Not Found
+
+A `404 Not Found` error occurs when the resource you are trying to access does not exist. For example, if you try to get a book with an ID that is not in the database, you will receive a `404 Not Found` error.
+
+### 405 Method Not Allowed
+
+A `405 Method Not Allowed` error occurs when you try to use an HTTP method that is not supported by the endpoint. For example, if you try to `POST` to a `/api/source/book/{id}` endpoint that only supports `GET`, `PUT`, and `DELETE`, you will receive a `405 Method Not Allowed` error.
+
+### 415 Unsupported Media Type
+
+A `415 Unsupported Media Type` error occurs when the `Content-Type` header of the request is not supported by the endpoint. For example, if you send a request with a `Content-Type` of `application/xml` to an endpoint that only supports `application/json`, you will receive a `415 Unsupported Media Type` error.
+
+### 500 Internal Server Error
+
+A `500 Internal Server Error` is a generic error message that indicates that something has gone wrong on the server. This can be caused by a variety of issues, such as a bug in the code or a problem with the database connection. If you receive this error, it is best to check the server logs for more information.
+
 ### Source Object JSON Schemas
 This is the format of JSON objects to be submitted with the various requests above in the Body of the request. All attributes for these objects are optional except for `author` and `title`.
 
@@ -359,7 +392,7 @@ This is the format of JSON objects to be submitted with the various requests abo
   "publicationYear": "number (optional)",
   "city": "string (optional)",
   "edition": "string (optional)",
-  "isbn": "string (optional)" // Required for backfill capabilities
+  "isbn": "string (optional)"
 }
 ```
 
@@ -388,7 +421,7 @@ This is the format of JSON objects to be submitted with the various requests abo
   "issue": "string (optional)",
   "pages": "string (optional)",
   "publicationYear": "number (optional)",
-  "doi": "string (optional)", // Required for backfill capabilities
+  "doi": "string (optional)",
   "url": "string (optional)"
 }
 ```
@@ -482,3 +515,4 @@ For brevity, our use cases are summarized in the table below. While not every pr
 - Add video backfilling capabilities
 - Add user authentication
 - Deployment & sample client creation
+
