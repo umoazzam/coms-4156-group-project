@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://citation-service-366055417335.us-central1.run.app/api';
 
 export const createSource = async (sourceType: string, sourceData: any) => {
   try {
