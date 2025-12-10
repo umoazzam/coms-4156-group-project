@@ -33,72 +33,68 @@ To view the original project proposal, click [here](https://docs.google.com/docu
 ## Project Structure
 
 ```
-src/
-├── main/
-│   ├── java/com/columbia/coms4156/citationservice/
-│   │   ├── `CitationServiceApplication.java`
-│   │   ├── controller/                             # API Endpoints
-│   │   │   ├── `CitationController.java`           # endpoints updated (e.g. GET /api/cite/{citationId})
-│   │   │   ├── `SourceController.java`             # POST /api/source/sources, etc.
-│   │   │   └── dto/
-│   │   │       ├── `BulkSourceRequest.java`
-│   │   │       └── `SourceBatchResponse.java`      # field renamed: `citationIds` (was `sourceIds`)
-│   │   ├── exception/
-│   │   │   ├── `GlobalExceptionHandler.java`
-│   │   │   ├── `ResourceNotFoundException.java`
-│   │   │   └── `ValidationException.java`
-│   │   ├── model/
-│   │   │   ├── `Article.java`
-│   │   │   ├── `Book.java`
-│   │   │   ├── `Citation.java`
-│   │   │   ├── `Source.java`
-│   │   │   ├── `Submission.java`
-│   │   │   ├── `User.java`
-│   │   │   └── `Video.java`
-│   │   ├── repository/                             # Database Method Management
-│   │   │   ├── `ArticleRepository.java`
-│   │   │   ├── `BookRepository.java`
-│   │   │   ├── `CitationRepository.java`
-│   │   │   ├── `SubmissionRepository.java`
-│   │   │   ├── `UserRepository.java`
-│   │   │   └── `VideoRepository.java`
-│   │   ├── service/                                # Backend Logic
-│   │   │   ├── `CitationService.java`
-│   │   │   ├── `CrossRefDoiService.java`          # CrossRef API for article backfill using DOI
-│   │   │   ├── `GoogleBooksService.java`          # Google API for book backfill using ISBN
-│   │   │   └── `SourceService.java`
-│   │   └── utils/
-│   │       └── `DatabaseStartupCheck.java`        # Checks database connection
-│   └── resources/
-│       ├── `application.properties`
-│       └── `(local) application-dev.properties`   # NOT committed — see 'Running the Application'
-└── test/
-    └── java/com/columbia/coms4156/citationservice/
-        ├── controller/
-        │   ├── CitationControllerIntegrationTest.java
-        │   ├── CitationControllerTest.java
-        │   └── SourceControllerTest.java
-        │
-        ├── model/
-        │   ├── ArticleTest.java
-        │   ├── BookTest.java
-        │   ├── CitationResponseTest.java
-        │   ├── CitationTest.java
-        │   ├── ErrorResponseTest.java
-        │   ├── GroupCitationResponseTest.java
-        │   ├── SourceTest.java
-        │   ├── SubmissionTest.java
-        │   ├── UserTest.java
-        │   └── VideoTest.java
-        │
-        ├── service/
-        │   ├── CitationServiceTest.java
-        │   ├── CrossRefDoiServiceTest.java
-        │   ├── GoogleBooksServiceTest.java
-        │   └── SourceServiceTest.java
-        │
-        └── CitationServiceApplicationTests.java
+coms-4156-group-project/
+├── checkstyle.xml
+├── pom.xml
+├── README.md
+├── t2-branch-coverage-report.html
+├── client/
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── README.md
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vite.config.ts
+│   ├── public/
+│   │   └── vite.svg
+│   └── src/
+│       ├── api.ts
+│       ├── App.css
+│       ├── App.tsx
+│       ├── index.css
+│       ├── main.tsx
+│       └── assets/
+│           └── react.svg
+├── src/
+│   ├── main/
+│   │   ├── java/com/columbia/coms4156/citationservice/
+│   │   │   ├── CitationServiceApplication.java
+│   │   │   ├── config/
+│   │   │   ├── controller/
+│   │   │   │   ├── CitationController.java
+│   │   │   │   ├── SourceController.java
+│   │   │   │   └── dto/
+│   │   │   ├── exception/
+│   │   │   ├── model/
+│   │   │   ├── repository/
+│   │   │   ├── service/
+│   │   │   └── utils/
+│   │   └── resources/
+│   │       ├── application-dev.properties
+│   │       ├── application.properties
+│   │       └── logback-spring.xml
+│   └── test/
+│       ├── java/com/columbia/coms4156/citationservice/
+│       │   ├── CitationServiceApplicationTests.java
+│       │   ├── controller/
+│       │   ├── model/
+│       │   └── service/
+│       └── resources/
+│           └── application-test.properties
+├── target/
+│   ├── checkstyle-cachefile
+│   ├── checkstyle-checker.xml
+│   ├── checkstyle-result.xml
+│   ├── classes/
+│   ├── generated-sources/
+│   ├── generated-test-sources/
+│   ├── maven-status/
+│   └── test-classes/
 ```
+
+This structure includes both backend (Spring Boot) and frontend (React/TypeScript) code, configuration files, resources, and build artifacts. Subfolders under `src/main/java/com/columbia/coms4156/citationservice/` include controllers, models, repositories, services, exceptions, and utilities. The `client` directory contains the React client app. The `target` directory contains build outputs and reports.
 
 ## Class and Database Design
 See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
@@ -282,8 +278,8 @@ This section outlines the most important API endpoints for our project. It will 
 {
     "submissionId": 75,
     "citationIds": [
-        "107", // CitationId for "Deep Learning with Python". 
-        "108"  // CitationId for "Understanding Neural Networks"
+        "107",
+        "108"
     ],
     "errors": []
 }
@@ -346,6 +342,43 @@ Orwell, George. _1984_. Secker & Warburg, 1949.
 }
 ```
 
+## Error Codes
+
+The API uses standard HTTP status codes to indicate the success or failure of a request. Here is a summary of the error codes the API can return:
+
+| Status Code | Error                               | Description                                                                                                                                 |
+|-------------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 400         | Bad Request                         | The server cannot or will not process the request due to something that is perceived to be a client error (e.g., malformed request syntax). |
+| 404         | Not Found                           | The server cannot find the requested resource. This can happen if you request a source or citation with an ID that does not exist.            |
+| 405         | Method Not Allowed                  | The request method is known by the server but is not supported by the target resource.                                                      |
+| 415         | Unsupported Media Type              | The server is refusing to accept the request because the payload format is in an unsupported format.                                        |
+| 500         | Internal Server Error               | The server has encountered a situation it doesn't know how to handle.                                                                       |
+
+### 400 Bad Request
+
+A `400 Bad Request` error can occur for several reasons:
+
+-   **Malformed JSON**: The request body is not valid JSON.
+-   **Validation Error**: The request body is missing required fields or contains invalid values. For example, submitting a book without a `title` or `author`.
+-   **Illegal Argument**: An argument provided in the request is invalid. For example, providing an invalid citation style.
+-   **Method Argument Type Mismatch**: A path variable or request parameter is of the wrong type. For example, providing a string for a source ID that should be a number.
+
+### 404 Not Found
+
+A `404 Not Found` error occurs when the resource you are trying to access does not exist. For example, if you try to get a book with an ID that is not in the database, you will receive a `404 Not Found` error.
+
+### 405 Method Not Allowed
+
+A `405 Method Not Allowed` error occurs when you try to use an HTTP method that is not supported by the endpoint. For example, if you try to `POST` to a `/api/source/book/{id}` endpoint that only supports `GET`, `PUT`, and `DELETE`, you will receive a `405 Method Not Allowed` error.
+
+### 415 Unsupported Media Type
+
+A `415 Unsupported Media Type` error occurs when the `Content-Type` header of the request is not supported by the endpoint. For example, if you send a request with a `Content-Type` of `application/xml` to an endpoint that only supports `application/json`, you will receive a `415 Unsupported Media Type` error.
+
+### 500 Internal Server Error
+
+A `500 Internal Server Error` is a generic error message that indicates that something has gone wrong on the server. This can be caused by a variety of issues, such as a bug in the code or a problem with the database connection. If you receive this error, it is best to check the server logs for more information.
+
 ### Source Object JSON Schemas
 This is the format of JSON objects to be submitted with the various requests above in the Body of the request. All attributes for these objects are optional except for `author` and `title`.
 
@@ -359,7 +392,7 @@ This is the format of JSON objects to be submitted with the various requests abo
   "publicationYear": "number (optional)",
   "city": "string (optional)",
   "edition": "string (optional)",
-  "isbn": "string (optional)" // Required for backfill capabilities
+  "isbn": "string (optional)"
 }
 ```
 
@@ -388,7 +421,7 @@ This is the format of JSON objects to be submitted with the various requests abo
   "issue": "string (optional)",
   "pages": "string (optional)",
   "publicationYear": "number (optional)",
-  "doi": "string (optional)", // Required for backfill capabilities
+  "doi": "string (optional)",
   "url": "string (optional)"
 }
 ```
@@ -427,12 +460,151 @@ The client will be available at `http://localhost:5173`.
 
 The client is configured to connect to the service API running at `http://localhost:8080`. Ensure that the main Spring Boot application is running before you start the client.
 
-The service is able to handle multiple instances of the client running simultaneously. Since the client is a stateless, frontend application, each instance maintains its own state and makes independent API calls to the service. The service processes each request without needing to differentiate between clients, as each API call is a self-contained transaction.
+### Handling Multiple Clients
 
-## Testing with Postman
-These are API tests you can use to exercise the service endpoints (create, retrieve, update, delete sources and generate citations).
+The service can interface with multiple instances of this client running simultaneously. This is possible because both the client and the service are designed to be stateless. Each client instance manages its own state, and the server processes each API request as a self-contained transaction without needing to store session information.
 
-[Postman collection — API tests](https://web.postman.co/workspace/My-Workspace~944de483-7347-4047-89cb-e75c81e1ba7b/collection/32914220-d96cfb1c-3cc6-48fc-993f-46baea892753?action=share&source=copy-link&creator=32914220)
+Here's how the code supports this:
+
+#### 1. Client-Side State Management
+
+Each instance of the React client maintains its own state independently. In `client/src/App.tsx`, the `useState` hook is used to manage the list of resources and their generated citations locally within the browser.
+
+```typescript
+// client/src/App.tsx
+
+function App() {
+  const [citations, setCitations] = useState<{ [key: string]: string }>({});
+  const [styles, setStyles] = useState<{ [key: string]: string }>({});
+  const [resources, setResources] = useState<Resource[]>([]);
+  // ...
+}
+```
+
+When you open the application in two different browser tabs, each tab will have its own `citations`, `styles`, and `resources` state. Changes in one tab will not affect the other.
+
+#### 2. Stateless API Calls
+
+The client makes atomic API calls that do not depend on a server-side session. Each request contains all the necessary information for the server to process it. For example, the `getCitation` function in `client/src/api.ts` sends the `sourceType`, `sourceId`, and `style` with every request.
+
+```typescript
+// client/src/api.ts
+
+export const getCitation = async (sourceType: string, sourceId: number, style: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/cite/${sourceType}/${sourceId}`, { params: { style } });
+    // ...
+    return response.data;
+  } catch (error) {
+    // ...
+    throw error;
+  }
+};
+```
+
+This stateless approach means the server doesn't need to track which client is making a request, as every request is independent.
+
+#### 3. Stateless and Cross-Origin Enabled API
+
+The backend is a stateless REST API. The controllers do not maintain session state between requests. Furthermore, the `@CrossOrigin(origins = "*")` annotation on the controllers, such as `CitationController`, explicitly allows requests from any origin.
+
+```java
+// src/main/java/com/columbia/coms4156/citationservice/controller/CitationController.java
+
+@RestController
+@RequestMapping("/api/cite")
+@CrossOrigin(origins = "*")
+public class CitationController {
+    // ...
+}
+```
+
+This configuration is key to allowing multiple client instances, potentially running on different machines or ports, to all interact with the same API endpoints without issue.
+
+## Testing
+
+### End-to-End Testing
+
+This section documents user stories and a corresponding set of Postman tests to ensure the end-to-end functionality of the client and the citation service API.
+
+**Postman Collection:** [Link to Postman Collection]
+
+#### User Stories
+
+1.  **As a user, I want to generate an MLA citation for a book.**
+    - *Given* the application has loaded a list of resources including a book.
+    - *When* I click the "Generate Citation" button for the book and select "MLA" style.
+    - *Then* I should see the correctly formatted MLA citation for the book displayed on the screen.
+
+2.  **As a user, I want to generate an APA citation for an article.**
+    - *Given* the application has loaded a list of resources including an article.
+    - *When* I click the "Generate Citation" button for the article and select "APA" style.
+    - *Then* I should see the correctly formatted APA citation for the article displayed on the screen.
+
+3.  **As a user, I want to generate a Chicago citation for a website.**
+    - *Given* the application has loaded a list of resources including a website.
+    - *When* I click the "Generate Citation" button for the website and select "Chicago" style.
+    - *Then* I should see the correctly formatted Chicago citation for the website displayed on the screen.
+
+#### Postman Tests for API Simulation
+
+The following Postman tests simulate the client's interaction with the API.
+
+1.  **Create a Book Source and Generate a Citation**
+    - **Step 1: Create Book Source**
+        - **Request:** `POST /api/sources`
+        - **Body (raw, JSON):**
+          ```json
+          {
+            "sourceType": "Book",
+            "title": "The Great Gatsby",
+            "authors": ["F. Scott Fitzgerald"],
+            "publisher": "Charles Scribner's Sons",
+            "publicationYear": 1925
+          }
+          ```
+        - **Tests:** Assert that the response status is `201 Created` and the response body contains the created source with a valid ID.
+    - **Step 2: Generate Citation**
+        - **Request:** `GET /api/citations?sourceId={sourceId}&style=MLA` (replace `{sourceId}` with the ID from Step 1).
+        - **Tests:** Assert that the response status is `200 OK` and the response body contains a non-empty `citation` string.
+
+2.  **Create an Article Source and Generate a Citation**
+    - **Step 1: Create Article Source**
+        - **Request:** `POST /api/sources`
+        - **Body (raw, JSON):**
+          ```json
+          {
+            "sourceType": "Article",
+            "title": "The Structure of Scientific Revolutions",
+            "authors": ["Thomas S. Kuhn"],
+            "journal": "International Encyclopedia of Unified Science",
+            "publicationYear": 1962,
+            "volume": "2",
+            "issue": "2"
+          }
+          ```
+        - **Tests:** Assert that the response status is `201 Created` and the response body contains the created source with a valid ID.
+    - **Step 2: Generate Citation**
+        - **Request:** `GET /api/citations?sourceId={sourceId}&style=APA` (replace `{sourceId}` with the ID from Step 1).
+        - **Tests:** Assert that the response status is `200 OK` and the response body contains a non-empty `citation` string.
+
+3.  **Create a Website Source and Generate a Citation**
+    - **Step 1: Create Website Source**
+        - **Request:** `POST /api/sources`
+        - **Body (raw, JSON):**
+          ```json
+          {
+            "sourceType": "Website",
+            "title": "The Official Website of the Nobel Prize",
+            "authors": ["The Nobel Foundation"],
+            "url": "https://www.nobelprize.org/",
+            "accessDate": "2023-10-27"
+          }
+          ```
+        - **Tests:** Assert that the response status is `201 Created` and the response body contains the created source with a valid ID.
+    - **Step 2: Generate Citation**
+        - **Request:** `GET /api/citations?sourceId={sourceId}&style=Chicago` (replace `{sourceId}` with the ID from Step 1).
+        - **Tests:** Assert that the response status is `200 OK` and the response body contains a non-empty `citation` string.
 
 ## Development Notes
 
@@ -482,3 +654,4 @@ For brevity, our use cases are summarized in the table below. While not every pr
 - Add video backfilling capabilities
 - Add user authentication
 - Deployment & sample client creation
+
