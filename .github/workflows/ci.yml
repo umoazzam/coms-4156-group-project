@@ -100,4 +100,5 @@ jobs:
             DB_URL=jdbc:postgresql:///${{ secrets.DB_NAME }}?cloudSqlInstance=${{ secrets.CLOUDSQL_INSTANCE }}&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=${{ secrets.DB_USER }}&password=${{ secrets.DB_PASSWORD }}
             GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
             HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+            DB_DRIVER=org.postgresql.Driver
             SPRING_PROFILES_ACTIVE=prod
