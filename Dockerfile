@@ -7,7 +7,8 @@ COPY pom.xml .
 COPY src ./src
 
 # Build the application (skipping tests as they are run in the CI pipeline)
-RUN mvn clean package -DskipTests
+# Also skipping checkstyle as it's run in the CI pipeline
+RUN mvn clean package -DskipTests -Dcheckstyle.skip
 
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:17-jre-alpine
