@@ -96,6 +96,22 @@ coms-4156-group-project/
 
 This structure includes both backend (Spring Boot) and frontend (React/TypeScript) code, configuration files, resources, and build artifacts. Subfolders under `src/main/java/com/columbia/coms4156/citationservice/` include controllers, models, repositories, services, exceptions, and utilities. The `client` directory contains the React client app. The `target` directory contains build outputs and reports.
 
+### Developing a Third-Party Client
+
+This service is designed to be accessible by any third-party client capable of making HTTP requests. To develop your own client, you will need to interact with our RESTful API. Here’s what you need to know to get started:
+
+1.  **API Base URL**: The live service is hosted on Google Cloud Run. The base URL for all API endpoints is: `https://citation-service-366055417335.us-central1.run.app/api`. For local development, the base URL is `http://localhost:8080/api`.
+
+2.  **API Endpoints**: A comprehensive list of available endpoints, including HTTP methods and path parameters, can be found in the [API Endpoints](#api-endpoints) section.
+
+3.  **Data Schemas**: When sending data to the API (e.g., in the body of a `POST` or `PUT` request), your JSON objects must conform to the structures outlined in the [Source Object JSON Schemas](#source-object-json-schemas) section.
+
+4.  **API Usage Examples**: For practical examples of how to make requests for common operations like creating sources and generating citations, please refer to the [API Usage](#api-usage) section.
+
+5.  **Error Handling**: The API uses standard HTTP status codes to indicate the outcome of a request. Your client should be prepared to handle potential errors. A summary of common error codes and their meanings is available in the [Error Codes](#error-codes) section.
+
+6.  **Stateless Architecture**: The API is stateless, meaning each request is processed independently without relying on a server-side session. Your client must send all necessary information with each request. The API also supports Cross-Origin Resource Sharing (CORS) from any origin, so you can make requests directly from a browser-based client.
+
 ## API Endpoints
 
 The base URL for the deployed API is: `https://citation-service-366055417335.us-central1.run.app/api`
@@ -430,6 +446,7 @@ This is the format of JSON objects to be submitted with the various requests abo
 
 ### Backfilling
 Backfilling is currently available for the Books and Articles. Books are backfilled using the external API, [Google Books API](https://developers.google.com/books) and Articles are backfilled using the external API, [CrossRef API](https://api.crossref.org/swagger-ui/index.html). Book sources that you desire to be backfilled must include an ISBN, and Article sources must include a DOI.
+
 
 ## Client Application
 
