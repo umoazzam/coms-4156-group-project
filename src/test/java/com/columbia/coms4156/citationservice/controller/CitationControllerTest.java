@@ -477,6 +477,16 @@ class CitationControllerTest {
                 .andExpect(jsonPath("$.status").value(400));
     }
 
+    @Test
+    @DisplayName("GET /api/cite/{citationId} returns 400 for negative ID")
+    void generateCitationForSource_NegativeId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/{citationId}", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
 
     @Test
     @DisplayName("GET /api/cite/{citationId} returns 500 for unexpected exception")
@@ -562,6 +572,38 @@ class CitationControllerTest {
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.status").value(400));
     }
+
+    @Test
+    @DisplayName("GET /api/cite/group/{submissionId} returns 400 for negative ID")
+    void generateCitationsForGroup_NegativeId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/group/{submissionId}", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/book returns 400 for invalid JSON")
+    void generateBookCitationFromData_InvalidJson() throws Exception {
+        // Act & Assert - testing GlobalExceptionHandler for invalid JSON
+        mockMvc.perform(post("/api/cite/book?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("invalid json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/{citationId} returns 400 for invalid ID type")
+    void generateCitationForSource_InvalidIdType() throws Exception {
+        // Act & Assert - testing GlobalExceptionHandler branch where requiredType is null (line 155)
+        // Passing invalid ID type (non-numeric) should trigger MethodArgumentTypeMismatchException
+        mockMvc.perform(get("/api/cite/{citationId}", "invalid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
 
 
     @Test

@@ -62,6 +62,20 @@ class CitationServiceTest {
     }
 
     @Test
+    void testFormatAuthorNameSingleWord() {
+        String author = "Madonna";
+        String formattedName = citationService.formatAuthorName(author);
+        assertEquals("Madonna", formattedName);
+    }
+
+    @Test
+    void testFormatAuthorNameSingleWordMultipleAuthors() {
+        String authors = "Madonna, Cher";
+        String formattedName = citationService.formatAuthorName(authors);
+        assertEquals("Madonna and Cher", formattedName);
+    }
+
+    @Test
     void testFormatAuthorNameMultipleAuthors() {
         String authors = "John Doe, Jane Smith";
         String formattedNames = citationService.formatAuthorName(authors);
@@ -83,10 +97,31 @@ class CitationServiceTest {
     }
 
     @Test
+    void testFormatAuthorNameFiveAuthors() {
+        String authors = "John Doe, Jane Smith, Peter Jones, Mary Brown, Tom Wilson";
+        String formattedNames = citationService.formatAuthorName(authors);
+        assertEquals("Doe, John and Smith, Jane and Jones, Peter and Brown, Mary and Wilson, Tom", formattedNames);
+    }
+
+    @Test
     void testFormatAPAAuthorNameSingleAuthor() {
         String author = "John Doe";
         String formattedName = citationService.formatAPAAuthorName(author);
         assertEquals("Doe, J.", formattedName);
+    }
+
+    @Test
+    void testFormatAPAAuthorNameSingleWord() {
+        String author = "Madonna";
+        String formattedName = citationService.formatAPAAuthorName(author);
+        assertEquals("Madonna", formattedName);
+    }
+
+    @Test
+    void testFormatAPAAuthorNameSingleWordMultipleAuthors() {
+        String authors = "Madonna, Cher";
+        String formattedName = citationService.formatAPAAuthorName(authors);
+        assertEquals("Madonna & Cher", formattedName);
     }
 
     @Test
@@ -108,6 +143,13 @@ class CitationServiceTest {
         String authors = "John Doe, Jane Smith, Peter Jones, Mary Brown";
         String formattedNames = citationService.formatAPAAuthorName(authors);
         assertEquals("Doe, J., Smith, J., Jones, P. & Brown, M.", formattedNames);
+    }
+
+    @Test
+    void testFormatAPAAuthorNameFiveAuthors() {
+        String authors = "John Doe, Jane Smith, Peter Jones, Mary Brown, Tom Wilson";
+        String formattedNames = citationService.formatAPAAuthorName(authors);
+        assertEquals("Doe, J., Smith, J., Jones, P., Brown, M. & Wilson, T.", formattedNames);
     }
 
     @Test
@@ -1209,6 +1251,29 @@ class CitationServiceTest {
     }
 
     @Test
+    void testGenerateCitationByStyleUnsupportedSourceTypeForAPA() {
+        String unsupportedObject = "Not a Book, Video, or Article";
+        try {
+            citationService.generateCitationByStyle(unsupportedObject, "APA");
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Unsupported source type"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationByStyleUnsupportedSourceTypeForChicago() {
+        String unsupportedObject = "Not a Book, Video, or Article";
+        try {
+            citationService.generateCitationByStyle(unsupportedObject, "CHICAGO");
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Unsupported source type"));
+        }
+    }
+
+
+    @Test
     void testGenerateCitationForBookWithBackfillPartialNullFields() {
         Long citationId = 15L;
         Long bookId = 105L;
@@ -1352,18 +1417,72 @@ class CitationServiceTest {
     void testGenerateMLACitationForBookWithPublisherButNoYear() {
         Book book = new Book("The Book Title", "John Doe");
         book.setPublisher("The Publisher");
-        // No year set
+        // No year set - tests the else branch at line 118
         String citation = citationService.generateMLACitation(book);
         assertEquals("Doe, John. _The Book Title_. The Publisher.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForBookWithPublisherAndYear() {
+        Book book = new Book("The Book Title", "John Doe");
+        book.setPublisher("The Publisher");
+        book.setPublicationYear(2023);
+        // Tests the if branch at line 115
+        String citation = citationService.generateMLACitation(book);
+        assertEquals("Doe, John. _The Book Title_. The Publisher, 2023.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForBookWithoutPublisherButWithYear() {
+        Book book = new Book("The Book Title", "John Doe");
+        book.setPublicationYear(2023);
+        // No publisher set - tests the branch where publisher is null/empty
+        String citation = citationService.generateMLACitation(book);
+        assertEquals("Doe, John. _The Book Title_. 2023.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForBookWithoutPublisherOrYear() {
+        Book book = new Book("The Book Title", "John Doe");
+        // No publisher or year set
+        String citation = citationService.generateMLACitation(book);
+        assertEquals("Doe, John. _The Book Title_.", citation);
     }
 
     @Test
     void testGenerateMLACitationForVideoWithPlatformButNoYear() {
         Video video = new Video("The Video Title", "John Doe");
         video.setPlatform("YouTube");
-        // No year set
+        // No year set - tests the else branch at line 152
         String citation = citationService.generateMLACitation(video);
         assertEquals("Doe, John. _The Video Title_. YouTube.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForVideoWithPlatformAndYear() {
+        Video video = new Video("The Video Title", "John Doe");
+        video.setPlatform("YouTube");
+        video.setReleaseYear(2023);
+        // Tests the if branch at line 149
+        String citation = citationService.generateMLACitation(video);
+        assertEquals("Doe, John. _The Video Title_. YouTube, 2023.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForVideoWithoutPlatformButWithYear() {
+        Video video = new Video("The Video Title", "John Doe");
+        video.setReleaseYear(2023);
+        // No platform set - tests the branch where platform is null/empty
+        String citation = citationService.generateMLACitation(video);
+        assertEquals("Doe, John. _The Video Title_. 2023.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForVideoWithoutPlatformOrYear() {
+        Video video = new Video("The Video Title", "John Doe");
+        // No platform or year set
+        String citation = citationService.generateMLACitation(video);
+        assertEquals("Doe, John. _The Video Title_.", citation);
     }
 
     @Test
@@ -1372,9 +1491,21 @@ class CitationServiceTest {
         article.setJournal("The Journal");
         article.setVolume("1");
         article.setPublicationYear(2023);
-        // No issue set
+        // No issue set - tests branch where volume exists but issue doesn't
         String citation = citationService.generateMLACitation(article);
         assertEquals("Doe, John. \"The Article Title.\" The Journal, vol. 1, 2023.", citation);
+    }
+
+    @Test
+    void testGenerateMLACitationForArticleWithJournalVolumeIssueAndYear() {
+        Article article = new Article("The Article Title", "John Doe");
+        article.setJournal("The Journal");
+        article.setVolume("1");
+        article.setIssue("2");
+        article.setPublicationYear(2023);
+        // Tests all branches: volume exists, issue exists, year exists
+        String citation = citationService.generateMLACitation(article);
+        assertEquals("Doe, John. \"The Article Title.\" The Journal, vol. 1, no. 2, 2023.", citation);
     }
 
     @Test
@@ -1394,9 +1525,21 @@ class CitationServiceTest {
         article.setJournal("The Journal");
         article.setVolume("1");
         article.setPublicationYear(2023);
-        // No issue set
+        // No issue set - tests branch where volume exists but issue doesn't
         String citation = citationService.generateAPACitation(article);
         assertEquals("Doe, J. (2023). The Article Title. The Journal, 1.", citation);
+    }
+
+    @Test
+    void testGenerateAPACitationForArticleWithVolumeAndIssue() {
+        Article article = new Article("The Article Title", "John Doe");
+        article.setJournal("The Journal");
+        article.setVolume("1");
+        article.setIssue("2");
+        article.setPublicationYear(2023);
+        // Tests branch where both volume and issue exist
+        String citation = citationService.generateAPACitation(article);
+        assertEquals("Doe, J. (2023). The Article Title. The Journal, 1(2).", citation);
     }
 
     @Test
@@ -1420,15 +1563,28 @@ class CitationServiceTest {
         assertEquals("Doe, John. \"The Book Title.\" New York, 2023.", citation);
     }
 
+
     @Test
     void testGenerateChicagoCitationForArticleWithVolumeButNoIssue() {
         Article article = new Article("The Article Title", "John Doe");
         article.setJournal("The Journal");
         article.setVolume("1");
         article.setPublicationYear(2023);
-        // No issue set
+        // No issue set - tests branch where volume exists but issue doesn't
         String citation = citationService.generateChicagoCitation(article);
         assertEquals("Doe, John. \"The Article Title.\" The Journal 1 (2023).", citation);
+    }
+
+    @Test
+    void testGenerateChicagoCitationForArticleWithVolumeAndIssue() {
+        Article article = new Article("The Article Title", "John Doe");
+        article.setJournal("The Journal");
+        article.setVolume("1");
+        article.setIssue("2");
+        article.setPublicationYear(2023);
+        // Tests branch where both volume and issue exist
+        String citation = citationService.generateChicagoCitation(article);
+        assertEquals("Doe, John. \"The Article Title.\" The Journal 1, no. 2 (2023).", citation);
     }
 
     @Test
@@ -1576,7 +1732,7 @@ class CitationServiceTest {
         Book book = new Book("The Book Title", "John Doe");
         book.setPublisher("The Publisher");
         book.setPublicationYear(2023);
-        // No city set
+        // No city set - tests the branch where city is null/empty
         String citation = citationService.generateAPACitation(book);
         assertEquals("Doe, J. (2023). The Book Title. The Publisher.", citation);
     }
@@ -1631,6 +1787,26 @@ class CitationServiceTest {
     }
 
     @Test
+    void testGenerateChicagoCitationForBookWithCityAndPublisherButNoYear() {
+        Book book = new Book("The Book Title", "John Doe");
+        book.setCity("New York");
+        book.setPublisher("The Publisher");
+        // No year set - tests the branch where year is null
+        String citation = citationService.generateChicagoCitation(book);
+        assertEquals("Doe, John. \"The Book Title.\" New York: The Publisher,", citation);
+    }
+
+    @Test
+    void testGenerateChicagoCitationForBookWithCityButNoPublisherButWithYear() {
+        Book book = new Book("The Book Title", "John Doe");
+        book.setCity("New York");
+        book.setPublicationYear(2023);
+        // No publisher set - tests the branch where publisher is null/empty
+        String citation = citationService.generateChicagoCitation(book);
+        assertEquals("Doe, John. \"The Book Title.\" New York, 2023.", citation);
+    }
+
+    @Test
     void testGenerateChicagoCitationForArticleWithJournalButNoYear() {
         Article article = new Article("The Article Title", "John Doe");
         article.setJournal("The Journal");
@@ -1657,6 +1833,89 @@ class CitationServiceTest {
         // No volume, issue, or year set
         String citation = citationService.generateMLACitation(article);
         assertEquals("Doe, John. \"The Article Title.\" The Journal.", citation);
+    }
+
+    @Test
+    void testGenerateCitationsForGroupWithVideoNotFound() {
+        Long submissionId = 50L;
+        String style = "MLA";
+        Submission submission = new Submission();
+        submission.setId(submissionId);
+        Citation citation = new Citation();
+        citation.setId(1L);
+        citation.setMediaId(999L);
+        citation.setMediaType("video");
+        submission.setCitations(List.of(citation));
+        when(submissionRepository.findById(submissionId)).thenReturn(Optional.of(submission));
+        when(videoRepository.findById(999L)).thenReturn(Optional.empty());
+        try {
+            citationService.generateCitationsForGroup(submissionId, style, false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Media not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationsForGroupWithBookNotFound() {
+        Long submissionId = 51L;
+        String style = "MLA";
+        Submission submission = new Submission();
+        submission.setId(submissionId);
+        Citation citation = new Citation();
+        citation.setId(2L);
+        citation.setMediaId(999L);
+        citation.setMediaType("book");
+        submission.setCitations(List.of(citation));
+        when(submissionRepository.findById(submissionId)).thenReturn(Optional.of(submission));
+        when(bookRepository.findById(999L)).thenReturn(Optional.empty());
+        try {
+            citationService.generateCitationsForGroup(submissionId, style, false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Media not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationsForGroupWithArticleNotFound() {
+        Long submissionId = 52L;
+        String style = "MLA";
+        Submission submission = new Submission();
+        submission.setId(submissionId);
+        Citation citation = new Citation();
+        citation.setId(3L);
+        citation.setMediaId(999L);
+        citation.setMediaType("article");
+        submission.setCitations(List.of(citation));
+        when(submissionRepository.findById(submissionId)).thenReturn(Optional.of(submission));
+        when(articleRepository.findById(999L)).thenReturn(Optional.empty());
+        try {
+            citationService.generateCitationsForGroup(submissionId, style, false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Media not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationsForGroupWithUnsupportedMediaType() {
+        Long submissionId = 53L;
+        String style = "MLA";
+        Submission submission = new Submission();
+        submission.setId(submissionId);
+        Citation citation = new Citation();
+        citation.setId(4L);
+        citation.setMediaId(1L);
+        citation.setMediaType("unsupported"); // Unsupported media type
+        submission.setCitations(List.of(citation));
+        when(submissionRepository.findById(submissionId)).thenReturn(Optional.of(submission));
+        try {
+            citationService.generateCitationsForGroup(submissionId, style, false);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Unsupported media type"));
+        }
     }
 
 }
