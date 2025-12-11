@@ -85,6 +85,12 @@
             <artifactId>postgres-socket-factory</artifactId>
             <version>1.13.1</version>
         </dependency>
+        <!-- JSON Logging -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
     </dependencies>
 
     <build>
