@@ -531,5 +531,40 @@ class SourceServiceTest {
         assertEquals(1L, response.getSubmissionId());
         assertEquals(1, response.getCitationIds().size());
     }
+
+    @Test
+    void testAddOrAppendSourcesWithUserNotFound() {
+        SourceDTO sourceDTO = new SourceDTO();
+        sourceDTO.setMediaType("book");
+        sourceDTO.setTitle("Test Book");
+        sourceDTO.setAuthor("Test Author");
+
+        BulkSourceRequest request = new BulkSourceRequest();
+        request.setSources(Collections.singletonList(sourceDTO));
+        UserDTO user = new UserDTO();
+        user.setUsername("nonexistent");
+        request.setUser(user);
+
+        Submission submission = new Submission();
+        submission.setId(1L);
+
+        Book book = new Book();
+        book.setId(1L);
+
+        Citation citation = new Citation();
+        citation.setId(1L);
+
+        when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
+        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty()); // User not found
+        when(bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(anyString(), anyString())).thenReturn(Optional.empty());
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(citationRepository.save(any(Citation.class))).thenReturn(citation);
+
+        var response = sourceService.addOrAppendSources(request, null);
+
+        assertEquals(1L, response.getSubmissionId());
+        assertEquals(1, response.getCitationIds().size());
+        // Submission should be created without user since user was not found
+    }
 }
 
