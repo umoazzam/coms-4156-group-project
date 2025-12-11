@@ -1,8 +1,10 @@
 package com.columbia.coms4156.citationservice.service;
 
+import com.columbia.coms4156.citationservice.exception.ResourceNotFoundException;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.model.Book;
 import com.columbia.coms4156.citationservice.model.Citation;
+import com.columbia.coms4156.citationservice.model.CitationResponse;
 import com.columbia.coms4156.citationservice.model.GroupCitationResponse;
 import com.columbia.coms4156.citationservice.model.Submission;
 import com.columbia.coms4156.citationservice.model.Video;
@@ -668,6 +670,476 @@ class CitationServiceTest {
         article.setVolume("1");
         String citation = citationService.generateChicagoCitation(article);
         assertEquals("Doe, John. \"The Article Title.\" The Journal 1 (", citation);
+    }
+
+    @Test
+    void testGenerateCitationForSourceNotFound() {
+        Long citationId = 999L;
+        when(citationRepository.findById(citationId)).thenReturn(Optional.empty());
+
+        try {
+            citationService.generateCitationForSource(citationId, "MLA", false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (com.columbia.coms4156.citationservice.exception.ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Citation not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationsForGroupNotFound() {
+        Long submissionId = 999L;
+        when(submissionRepository.findById(submissionId)).thenReturn(Optional.empty());
+
+        try {
+            citationService.generateCitationsForGroup(submissionId, "MLA", false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (com.columbia.coms4156.citationservice.exception.ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Submission not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationByMediaTypeUnsupportedMediaType() {
+        Long citationId = 14L;
+        Long mediaId = 1L;
+        String style = "MLA";
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(mediaId);
+        citation.setMediaType("podcast"); // Unsupported type
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+
+        try {
+            citationService.generateCitationForSource(citationId, style, false);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Unsupported media type"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationByMediaTypeMediaNotFound() {
+        Long citationId = 8L;
+        Long bookId = 999L;
+        String style = "MLA";
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(bookId);
+        citation.setMediaType("book");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
+
+        try {
+            citationService.generateCitationForSource(citationId, style, false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (com.columbia.coms4156.citationservice.exception.ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Media not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationForBookWithSuccessfulBackfill() {
+        Long citationId = 9L;
+        Long bookId = 104L;
+        String isbn = "9780140449112";
+        String style = "MLA";
+
+        Book storedBook = new Book("Original Title", "Original Author");
+        storedBook.setId(bookId);
+        storedBook.setIsbn(isbn);
+        storedBook.setPublisher("Original Publisher");
+        storedBook.setPublicationYear(2000);
+
+        Book backfilledBook = new Book("Backfilled Title", "Backfilled Author");
+        backfilledBook.setPublisher("Backfilled Publisher");
+        backfilledBook.setPublicationYear(2020);
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(bookId);
+        citation.setMediaType("book");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
+        when(googleBooksService.fetchBookDataByIsbn(isbn))
+                .thenReturn(reactor.core.publisher.Mono.just(backfilledBook));
+
+        CitationResponse response = citationService.generateCitationForSource(citationId, style, true);
+        assertNotNull(response);
+        // The citation should use backfilled data
+        assertTrue(response.getCitationString().contains("Backfilled"));
+    }
+
+    @Test
+    void testGenerateCitationForArticleWithSuccessfulBackfill() {
+        Long citationId = 10L;
+        Long articleId = 204L;
+        String doi = "10.1234/test.5678";
+        String style = "MLA";
+
+        Article storedArticle = new Article("Original Article Title", "Original Author");
+        storedArticle.setId(articleId);
+        storedArticle.setDoi(doi);
+        storedArticle.setJournal("Original Journal");
+        storedArticle.setPublicationYear(2020);
+
+        Article backfilledArticle = new Article("Backfilled Article Title", "Backfilled Author");
+        backfilledArticle.setJournal("Backfilled Journal");
+        backfilledArticle.setPublicationYear(2023);
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(storedArticle));
+        when(crossRefDoiService.fetchArticleDataByDoi(doi))
+                .thenReturn(reactor.core.publisher.Mono.just(backfilledArticle));
+
+        CitationResponse response = citationService.generateCitationForSource(citationId, style, true);
+        assertNotNull(response);
+        // The citation should use backfilled data
+        assertTrue(response.getCitationString().contains("Backfilled"));
+    }
+
+    @Test
+    void testGenerateCitationByStyleUnsupportedStyle() {
+        Book book = new Book("The Book Title", "John Doe");
+        try {
+            citationService.generateCitationByStyle(book, "INVALID");
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Unsupported citation style"));
+        }
+    }
+
+    @Test
+    void testGenerateMLACitationForBookNullBook() {
+        try {
+            citationService.generateMLACitation((Book) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Book cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateMLACitationForVideoNullVideo() {
+        try {
+            citationService.generateMLACitation((Video) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Video cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateMLACitationForArticleNullArticle() {
+        try {
+            citationService.generateMLACitation((Article) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Article cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateAPACitationForBookNullBook() {
+        try {
+            citationService.generateAPACitation((Book) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Book cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateAPACitationForVideoNullVideo() {
+        try {
+            citationService.generateAPACitation((Video) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Video cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateAPACitationForArticleNullArticle() {
+        try {
+            citationService.generateAPACitation((Article) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Article cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateChicagoCitationForBookNullBook() {
+        try {
+            citationService.generateChicagoCitation((Book) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Book cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateChicagoCitationForVideoNullVideo() {
+        try {
+            citationService.generateChicagoCitation((Video) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Video cannot be null"));
+        }
+    }
+
+    @Test
+    void testGenerateChicagoCitationForArticleNullArticle() {
+        try {
+            citationService.generateChicagoCitation((Article) null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Article cannot be null"));
+        }
+    }
+
+    @Test
+    void testFormatAuthorNameNullAuthor() {
+        try {
+            citationService.formatAuthorName(null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Author name cannot be null or empty"));
+        }
+    }
+
+    @Test
+    void testFormatAuthorNameEmptyAuthor() {
+        try {
+            citationService.formatAuthorName("");
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Author name cannot be null or empty"));
+        }
+    }
+
+    @Test
+    void testFormatAPAAuthorNameNullAuthor() {
+        try {
+            citationService.formatAPAAuthorName(null);
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Author name cannot be null or empty"));
+        }
+    }
+
+    @Test
+    void testFormatAPAAuthorNameEmptyAuthor() {
+        try {
+            citationService.formatAPAAuthorName("");
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Author name cannot be null or empty"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationByMediaTypeVideoNotFound() {
+        Long citationId = 11L;
+        Long videoId = 999L;
+        String style = "MLA";
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(videoId);
+        citation.setMediaType("video");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(videoRepository.findById(videoId)).thenReturn(Optional.empty());
+
+        try {
+            citationService.generateCitationForSource(citationId, style, false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (com.columbia.coms4156.citationservice.exception.ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Media not found"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationByMediaTypeArticleNotFound() {
+        Long citationId = 12L;
+        Long articleId = 999L;
+        String style = "MLA";
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.empty());
+
+        try {
+            citationService.generateCitationForSource(citationId, style, false);
+            assertTrue(false, "Should have thrown ResourceNotFoundException");
+        } catch (com.columbia.coms4156.citationservice.exception.ResourceNotFoundException e) {
+            assertTrue(e.getMessage().contains("Media not found"));
+        }
+    }
+
+
+    @Test
+    void testGenerateCitationByStyleUnsupportedSourceType() {
+        String unsupportedObject = "Not a Book, Video, or Article";
+        try {
+            citationService.generateCitationByStyle(unsupportedObject, "MLA");
+            assertTrue(false, "Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Unsupported source type"));
+        }
+    }
+
+    @Test
+    void testGenerateCitationForBookWithBackfillPartialNullFields() {
+        Long citationId = 15L;
+        Long bookId = 105L;
+        String isbn = "9780140449112";
+        String style = "MLA";
+
+        Book storedBook = new Book("Original Title", "Original Author");
+        storedBook.setId(bookId);
+        storedBook.setIsbn(isbn);
+        storedBook.setPublisher("Original Publisher");
+        storedBook.setPublicationYear(2000);
+        storedBook.setCity("Original City");
+
+        // Backfilled book with some null optional fields - should fall back to original
+        // Create with required fields, but don't set optional ones to test null checks
+        Book backfilledBook = new Book("Backfilled Title", "Backfilled Author");
+        backfilledBook.setPublicationYear(2020);
+        // Don't set publisher or city - they will be null, should use original
+        // This tests the null check branches in the merge logic
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(bookId);
+        citation.setMediaType("book");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
+        when(googleBooksService.fetchBookDataByIsbn(isbn))
+                .thenReturn(reactor.core.publisher.Mono.just(backfilledBook));
+
+        CitationResponse response = citationService.generateCitationForSource(citationId, style, true);
+        assertNotNull(response);
+        // Should use backfilled title, author, and year, but original publisher (since backfilled publisher is null)
+        // This tests the null check branches in the merge logic (lines 306-317 in CitationService)
+        String citationStr = response.getCitationString();
+        assertTrue(citationStr.contains("Backfilled Title") || citationStr.contains("Backfilled Author"));
+        // The merge logic should have been executed, testing the null check branches
+    }
+
+    @Test
+    void testGenerateCitationForArticleWithBackfillPartialNullFields() {
+        Long citationId = 16L;
+        Long articleId = 205L;
+        String doi = "10.1234/test.5678";
+        String style = "MLA";
+
+        Article storedArticle = new Article("Original Article Title", "Original Author");
+        storedArticle.setId(articleId);
+        storedArticle.setDoi(doi);
+        storedArticle.setJournal("Original Journal");
+        storedArticle.setVolume("10");
+        storedArticle.setIssue("3");
+        storedArticle.setPublicationYear(2020);
+        storedArticle.setPages("100-110");
+        storedArticle.setUrl("http://original.url");
+
+        // Backfilled article with some null optional fields - should fall back to original
+        // Create with required fields, but don't set optional ones to test null checks
+        Article backfilledArticle = new Article("Backfilled Article Title", "Backfilled Author");
+        backfilledArticle.setVolume("20");
+        backfilledArticle.setPublicationYear(2023);
+        // Don't set journal, issue, pages, url - they will be null, should use original
+        // This tests the null check branches in the merge logic
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(storedArticle));
+        when(crossRefDoiService.fetchArticleDataByDoi(doi))
+                .thenReturn(reactor.core.publisher.Mono.just(backfilledArticle));
+
+        CitationResponse response = citationService.generateCitationForSource(citationId, style, true);
+        assertNotNull(response);
+        // Should use backfilled title, author, volume, and year, but original journal, issue, pages, url (since backfilled are null)
+        // This tests the null check branches in the merge logic (lines 340-358 in CitationService)
+        String citationStr = response.getCitationString();
+        assertTrue(citationStr.contains("Backfilled Article Title") || citationStr.contains("Backfilled Author"));
+        // The merge logic should have been executed, testing the null check branches
+    }
+
+    @Test
+    void testGenerateCitationForBookWithBackfillEmptyIsbn() {
+        Long citationId = 17L;
+        Long bookId = 106L;
+        String style = "MLA";
+
+        Book storedBook = new Book("Original Title", "Original Author");
+        storedBook.setId(bookId);
+        // Don't set ISBN - it will be null, should not call backfill
+        storedBook.setPublisher("Original Publisher");
+        storedBook.setPublicationYear(2000);
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(bookId);
+        citation.setMediaType("book");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(storedBook));
+        // googleBooksService should not be called
+
+        CitationResponse response = citationService.generateCitationForSource(citationId, style, true);
+        assertNotNull(response);
+        // Should use original data without backfill
+        assertTrue(response.getCitationString().contains("Original Title"));
+    }
+
+    @Test
+    void testGenerateCitationForArticleWithBackfillEmptyDoi() {
+        Long citationId = 18L;
+        Long articleId = 206L;
+        String style = "MLA";
+
+        Article storedArticle = new Article("Original Article Title", "Original Author");
+        storedArticle.setId(articleId);
+        // Don't set DOI - it will be null, should not call backfill
+        storedArticle.setJournal("Original Journal");
+        storedArticle.setPublicationYear(2020);
+
+        Citation citation = new Citation();
+        citation.setId(citationId);
+        citation.setMediaId(articleId);
+        citation.setMediaType("article");
+
+        when(citationRepository.findById(citationId)).thenReturn(Optional.of(citation));
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(storedArticle));
+        // crossRefDoiService should not be called
+
+        CitationResponse response = citationService.generateCitationForSource(citationId, style, true);
+        assertNotNull(response);
+        // Should use original data without backfill
+        assertTrue(response.getCitationString().contains("Original Article Title"));
     }
 
 }
