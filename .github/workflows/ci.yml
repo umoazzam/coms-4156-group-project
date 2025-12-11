@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, abdulmohsen/ci ]
+    branches: [ main, abdulmohsen/ci, jun/gcp-deployment ]
   pull_request:
-    branches: [ main, abdulmohsen/ci ]
+    branches: [ main, abdulmohsen/ci, jun/gcp-deployment ]
 
 jobs:
   build-and-test:
@@ -59,3 +59,50 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
+
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/jun/gcp-deployment'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: us-central1
+      REPO_NAME: citation-repo
+      SERVICE_NAME: citation-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Push Container
+        run: |
+          gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$SERVICE_NAME:${{ github.sha }} .
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          flags: '--allow-unauthenticated'
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          env_vars: |
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_URL=jdbc:postgresql:///${{ secrets.DB_NAME }}?cloudSqlInstance=${{ secrets.CLOUDSQL_INSTANCE }}&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=${{ secrets.DB_USER }}&password=${{ secrets.DB_PASSWORD }}
+            GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
+            HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+            DB_DRIVER=org.postgresql.Driver
+            SPRING_PROFILES_ACTIVE=prod
