@@ -3,7 +3,13 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
     <property name="LOG_FILE" value="logs/application.log"/>
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- Appender for PROD (JSON, No File) -->
+    <appender name="CONSOLE-JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    </appender>
+
+    <!-- Appender for LOCAL (Text, Readable) -->
+    <appender name="CONSOLE-TEXT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
             <charset>utf8</charset>
@@ -26,8 +32,25 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </root>
+    <!-- Reduce startup noise globally -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="com.zaxxer" level="WARN"/>
+    <logger name="org.apache" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+
+    <!-- PROD: JSON Console Only (Saves RAM/Disk on Cloud Run) -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE-JSON" />
+        </root>
+    </springProfile>
+
+    <!-- DEV: Text Console + File (Good for Local Debugging) -->
+    <springProfile name="dev | !prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE-TEXT" />
+            <appender-ref ref="FILE" />
+        </root>
+    </springProfile>
 </configuration>

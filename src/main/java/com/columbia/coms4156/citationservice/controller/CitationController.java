@@ -10,6 +10,8 @@ import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.service.CitationService;
 import com.columbia.coms4156.citationservice.service.SourceService;
 import com.columbia.coms4156.citationservice.utils.ResponseUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,8 +27,10 @@ import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * REST Controller for Citation creation API endpoints.
- * Provides endpoints for citation generation for various source types and styles.
- * Currently, supports ad-hoc MLA format generation for books, videos, and articles
+ * Provides endpoints for citation generation for various source types and
+ * styles.
+ * Currently, supports ad-hoc MLA format generation for books, videos, and
+ * articles
  * w/o backfill functionality. For style & backfill selection,
  * see the /{citationId} & /group/{submissionId} endpoints below.
  */
@@ -34,6 +38,9 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/api/cite")
 @CrossOrigin(origins = "*")
 public class CitationController {
+
+  /** Logger for this class. */
+  private static final Logger LOGGER = LoggerFactory.getLogger(CitationController.class);
 
   /**
    * Service for citation generation operations.
@@ -99,6 +106,7 @@ public class CitationController {
    */
   @GetMapping("/book/{id}")
   public ResponseEntity<?> generateBookCitation(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for book ID: {}", id);
     validateId(id, "Book");
 
     Book book = sourceService.findBookById(id)
@@ -106,6 +114,7 @@ public class CitationController {
             "No book found with ID: " + id + ". Please verify the book ID and try again."));
 
     String citation = citationService.generateMLACitation(book);
+    LOGGER.info("Successfully generated citation for book ID: {}", id);
     return ResponseUtil.ok(citation);
   }
 
@@ -124,6 +133,7 @@ public class CitationController {
       @Valid @RequestBody Book book,
       @RequestParam(defaultValue = "MLA") String style,
       HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for book: {} with style: {}", book, style);
     if (book == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide book information.");
@@ -132,6 +142,7 @@ public class CitationController {
     validateStyle(style);
 
     String citation = citationService.generateCitationByStyle(book, style);
+    LOGGER.info("Successfully generated citation for book.");
     return ResponseUtil.ok(citation);
   }
 
@@ -147,13 +158,18 @@ public class CitationController {
   @GetMapping("/video/{id}")
   public ResponseEntity<?> generateVideoCitation(@PathVariable Long id,
                                                  HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for video ID: {}", id);
     validateId(id, "Video");
 
     Video video = sourceService.findVideoById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No video found with ID: " + id + ". Please verify the video ID and try again."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Video not found for ID: {}", id);
+          return new ResourceNotFoundException(
+              "No video found with ID: " + id + ". Please verify the video ID and try again.");
+        });
 
     String citation = citationService.generateMLACitation(video);
+    LOGGER.info("Successfully generated citation for video ID: {}", id);
     return ResponseUtil.ok(citation);
   }
 
@@ -172,6 +188,7 @@ public class CitationController {
       @Valid @RequestBody Video video,
       @RequestParam(defaultValue = "MLA") String style,
       HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for video: {} with style: {}", video, style);
     if (video == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide video information.");
@@ -180,6 +197,7 @@ public class CitationController {
     validateStyle(style);
 
     String citation = citationService.generateCitationByStyle(video, style);
+    LOGGER.info("Successfully generated citation for video.");
     return ResponseUtil.ok(citation);
   }
 
@@ -195,6 +213,7 @@ public class CitationController {
   @GetMapping("/article/{id}")
   public ResponseEntity<?> generateArticleCitation(@PathVariable Long id,
                                                    HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for article ID: {}", id);
     validateId(id, "Article");
 
     Article article = sourceService.findArticleById(id)
@@ -202,6 +221,7 @@ public class CitationController {
             "No article found with ID: " + id + ". Please verify the article ID and try again."));
 
     String citation = citationService.generateMLACitation(article);
+    LOGGER.info("Successfully generated citation for article ID: {}", id);
     return ResponseUtil.ok(citation);
   }
 
@@ -220,6 +240,8 @@ public class CitationController {
       @Valid @RequestBody Article article,
       @RequestParam(defaultValue = "MLA") String style,
       HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for article: {} with style: {}",
+        article, style);
     if (article == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide article information.");
@@ -228,6 +250,7 @@ public class CitationController {
     validateStyle(style);
 
     String citation = citationService.generateCitationByStyle(article, style);
+    LOGGER.info("Successfully generated citation for article.");
     return ResponseUtil.ok(citation);
   }
 
@@ -254,11 +277,13 @@ public class CitationController {
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill,
       HttpServletRequest request) {
+    LOGGER.info("Received request to generate citation for source ID: {}", citationId);
     validateId(citationId, "CitationId");
     validateStyle(style);
 
     CitationResponse response = citationService.generateCitationForSource(
             citationId, style, backfill);
+    LOGGER.info("Successfully generated citation for source ID: {}", citationId);
     return ResponseUtil.ok(response);
   }
 
@@ -278,11 +303,13 @@ public class CitationController {
       @RequestParam(defaultValue = "MLA") String style,
       @RequestParam(defaultValue = "false") boolean backfill,
       HttpServletRequest request) {
+    LOGGER.info("Received request to generate citations for submission group ID: {}", submissionId);
     validateId(submissionId, "Submission");
     validateStyle(style);
 
     GroupCitationResponse response = citationService.generateCitationsForGroup(
         submissionId, style, backfill);
+    LOGGER.info("Successfully generated citations for submission group ID: {}", submissionId);
     return ResponseUtil.ok(response);
   }
 }

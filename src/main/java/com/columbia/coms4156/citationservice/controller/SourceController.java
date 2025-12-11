@@ -9,6 +9,8 @@ import com.columbia.coms4156.citationservice.model.Video;
 import com.columbia.coms4156.citationservice.model.Article;
 import com.columbia.coms4156.citationservice.service.SourceService;
 import com.columbia.coms4156.citationservice.utils.ResponseUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +42,9 @@ import java.util.Arrays;
 @RequestMapping("/api/source")
 @CrossOrigin(origins = "*")
 public class SourceController {
+
+  /** Logger for this class. */
+  private static final Logger LOGGER = LoggerFactory.getLogger(SourceController.class);
 
   /**
    * Service for source management operations.
@@ -73,12 +78,14 @@ public class SourceController {
   @PostMapping("/book")
   public ResponseEntity<?> createBook(@Valid @RequestBody Book book,
                                        HttpServletRequest request) {
+    LOGGER.info("Received request to create book: {}", book);
     if (book == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide book information.");
     }
 
     Book savedBook = sourceService.saveBook(book);
+    LOGGER.info("Successfully created book with ID: {}", savedBook.getId());
     return ResponseUtil.created(savedBook);
   }
 
@@ -91,7 +98,9 @@ public class SourceController {
    */
   @GetMapping("/book")
   public ResponseEntity<?> getAllBooks(HttpServletRequest request) {
+    LOGGER.info("Received request to retrieve all books");
     List<Book> books = sourceService.getAllBooks();
+    LOGGER.info("Successfully retrieved {} books", books.size());
     return ResponseUtil.ok(books);
   }
 
@@ -105,11 +114,16 @@ public class SourceController {
    */
   @GetMapping("/book/{id}")
   public ResponseEntity<?> getBookById(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to retrieve book with ID: {}", id);
     validateId(id, "Book");
 
     Book book = sourceService.findBookById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No book found with ID: " + id + ". Please verify the book ID and try again."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Book not found for ID: {}", id);
+          return new ResourceNotFoundException(
+              "No book found with ID: " + id + ". Please verify the book ID and try again.");
+        });
+    LOGGER.info("Successfully retrieved book: {}", book);
     return ResponseUtil.ok(book);
   }
 
@@ -134,9 +148,11 @@ public class SourceController {
 
     Book updatedBook = sourceService.updateBook(id, book);
     if (updatedBook == null) {
+      LOGGER.warn("Book not found for update with ID: {}", id);
       throw new ResourceNotFoundException(
           "No book found with ID: " + id + ". Cannot update non-existent book.");
     }
+    LOGGER.info("Successfully updated book with ID: {}", id);
     return ResponseUtil.ok(updatedBook);
   }
 
@@ -150,12 +166,17 @@ public class SourceController {
    */
   @DeleteMapping("/book/{id}")
   public ResponseEntity<?> deleteBook(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to delete book with ID: {}", id);
     validateId(id, "Book");
 
     sourceService.findBookById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No book found with ID: " + id + ". Cannot delete non-existent book."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Book not found for delete with ID: {}", id);
+          return new ResourceNotFoundException(
+              "No book found with ID: " + id + ". Cannot delete non-existent book.");
+        });
     sourceService.deleteBook(id);
+    LOGGER.info("Successfully deleted book with ID: {}", id);
     return ResponseUtil.noContent();
   }
 
@@ -171,12 +192,14 @@ public class SourceController {
   @PostMapping("/video")
   public ResponseEntity<?> createVideo(@Valid @RequestBody Video video,
                                         HttpServletRequest request) {
+    LOGGER.info("Received request to create video: {}", video);
     if (video == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide video information.");
     }
 
     Video savedVideo = sourceService.saveVideo(video);
+    LOGGER.info("Successfully created video with ID: {}", savedVideo.getId());
     return ResponseUtil.created(savedVideo);
   }
 
@@ -189,7 +212,9 @@ public class SourceController {
    */
   @GetMapping("/video")
   public ResponseEntity<?> getAllVideos(HttpServletRequest request) {
+    LOGGER.info("Received request to retrieve all videos");
     List<Video> videos = sourceService.getAllVideos();
+    LOGGER.info("Successfully retrieved {} videos", videos.size());
     return ResponseUtil.ok(videos);
   }
 
@@ -203,11 +228,16 @@ public class SourceController {
    */
   @GetMapping("/video/{id}")
   public ResponseEntity<?> getVideoById(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to retrieve video with ID: {}", id);
     validateId(id, "Video");
 
     Video video = sourceService.findVideoById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No video found with ID: " + id + ". Please verify the video ID and try again."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Video not found for ID: {}", id);
+          return new ResourceNotFoundException(
+              "No video found with ID: " + id + ". Please verify the video ID and try again.");
+        });
+    LOGGER.info("Successfully retrieved video: {}", video);
     return ResponseUtil.ok(video);
   }
 
@@ -224,6 +254,7 @@ public class SourceController {
   public ResponseEntity<?> updateVideo(@PathVariable Long id,
                                       @Valid @RequestBody Video video,
                                       HttpServletRequest request) {
+    LOGGER.info("Received request to update video with ID: {}", id);
     validateId(id, "Video");
     if (video == null) {
       throw new ValidationException(
@@ -232,9 +263,11 @@ public class SourceController {
 
     Video updatedVideo = sourceService.updateVideo(id, video);
     if (updatedVideo == null) {
+      LOGGER.warn("Video not found for update with ID: {}", id);
       throw new ResourceNotFoundException(
           "No video found with ID: " + id + ". Cannot update non-existent video.");
     }
+    LOGGER.info("Successfully updated video with ID: {}", id);
     return ResponseUtil.ok(updatedVideo);
   }
 
@@ -248,12 +281,17 @@ public class SourceController {
    */
   @DeleteMapping("/video/{id}")
   public ResponseEntity<?> deleteVideo(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to delete video with ID: {}", id);
     validateId(id, "Video");
 
     sourceService.findVideoById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No video found with ID: " + id + ". Cannot delete non-existent video."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Video not found for delete with ID: {}", id);
+          return new ResourceNotFoundException(
+              "No video found with ID: " + id + ". Cannot delete non-existent video.");
+        });
     sourceService.deleteVideo(id);
+    LOGGER.info("Successfully deleted video with ID: {}", id);
     return ResponseUtil.noContent();
   }
 
@@ -269,12 +307,14 @@ public class SourceController {
   @PostMapping("/article")
   public ResponseEntity<?> createArticle(@Valid @RequestBody Article article,
                                          HttpServletRequest request) {
+    LOGGER.info("Received request to create article: {}", article);
     if (article == null) {
       throw new ValidationException(
           "Request body cannot be null. Please provide article information.");
     }
 
     Article savedArticle = sourceService.saveArticle(article);
+    LOGGER.info("Successfully created article with ID: {}", savedArticle.getId());
     return ResponseUtil.created(savedArticle);
   }
 
@@ -287,7 +327,9 @@ public class SourceController {
    */
   @GetMapping("/article")
   public ResponseEntity<?> getAllArticles(HttpServletRequest request) {
+    LOGGER.info("Received request to retrieve all articles");
     List<Article> articles = sourceService.getAllArticles();
+    LOGGER.info("Successfully retrieved {} articles", articles.size());
     return ResponseUtil.ok(articles);
   }
 
@@ -301,11 +343,16 @@ public class SourceController {
    */
   @GetMapping("/article/{id}")
   public ResponseEntity<?> getArticleById(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to retrieve article with ID: {}", id);
     validateId(id, "Article");
 
     Article article = sourceService.findArticleById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No article found with ID: " + id + ". Please verify the article ID and try again."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Article not found for ID: {}", id);
+          return new ResourceNotFoundException(
+              "No article found with ID: " + id + ". Please verify the article ID and try again.");
+        });
+    LOGGER.info("Successfully retrieved article: {}", article);
     return ResponseUtil.ok(article);
   }
 
@@ -322,6 +369,7 @@ public class SourceController {
   public ResponseEntity<?> updateArticle(@PathVariable Long id,
                                         @Valid @RequestBody Article article,
                                         HttpServletRequest request) {
+    LOGGER.info("Received request to update article with ID: {}", id);
     validateId(id, "Article");
     if (article == null) {
       throw new ValidationException(
@@ -330,9 +378,11 @@ public class SourceController {
 
     Article updatedArticle = sourceService.updateArticle(id, article);
     if (updatedArticle == null) {
+      LOGGER.warn("Article not found for update with ID: {}", id);
       throw new ResourceNotFoundException(
           "No article found with ID: " + id + ". Cannot update non-existent article.");
     }
+    LOGGER.info("Successfully updated article with ID: {}", id);
     return ResponseUtil.ok(updatedArticle);
   }
 
@@ -346,12 +396,17 @@ public class SourceController {
    */
   @DeleteMapping("/article/{id}")
   public ResponseEntity<?> deleteArticle(@PathVariable Long id, HttpServletRequest request) {
+    LOGGER.info("Received request to delete article with ID: {}", id);
     validateId(id, "Article");
 
     sourceService.findArticleById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "No article found with ID: " + id + ". Cannot delete non-existent article."));
+        .orElseThrow(() -> {
+          LOGGER.warn("Article not found for delete with ID: {}", id);
+          return new ResourceNotFoundException(
+              "No article found with ID: " + id + ". Cannot delete non-existent article.");
+        });
     sourceService.deleteArticle(id);
+    LOGGER.info("Successfully deleted article with ID: {}", id);
     return ResponseUtil.noContent();
   }
 
@@ -372,8 +427,10 @@ public class SourceController {
   public ResponseEntity<SourceBatchResponse> addSources(
       @RequestBody BulkSourceRequest request,
       @RequestParam(value = "submissionId", required = false) Long submissionId) {
+    LOGGER.info("Received request to add bulk sources. SubmissionId: {}", submissionId);
     // return 400 Bad Request when the request has no sources
     if (request == null || request.getSources() == null || request.getSources().isEmpty()) {
+      LOGGER.warn("Received empty bulk source request");
       SourceBatchResponse resp = new SourceBatchResponse();
       resp.setSubmissionId(submissionId);
       resp.setCitationIds(new ArrayList<>());
@@ -381,6 +438,7 @@ public class SourceController {
       return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
     SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
+    LOGGER.info("Successfully processed bulk sources. SubmissionId: {}", resp.getSubmissionId());
     return ResponseUtil.ok(resp);
   }
 }
