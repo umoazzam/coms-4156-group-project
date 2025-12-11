@@ -10,13 +10,15 @@ When the "Generate Citation" button is clicked for a resource, the client sends 
 
 ## How to build and run
 
-1.  **Install dependencies:**
+1. **Start the database server:**
+   Make sure the database server is running. You can find it here: https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=0&project=not-founders
+2.  **Install dependencies:**
     From this directory (`client`), run:
     ```bash
     npm install
     ```
 
-2.  **Run the client:**
+3.  **Run the client:**
     ```bash
     npm run dev
     ```
@@ -24,7 +26,7 @@ When the "Generate Citation" button is clicked for a resource, the client sends 
 
 ## How to connect to the service
 
-The client is configured to connect to the service API running at `http://localhost:8080`. Before starting the client, make sure the main Spring Boot application (the citation service) is running.
+The client is configured to connect to the service API. The base URL for the deployed service is `https://citation-service-366055417335.us-central1.run.app/api`. If you are choosing to run the API locally, then make sure the main Spring Boot application (the citation service) is running before you run the client app.
 
 ### Handling Multiple Clients
 

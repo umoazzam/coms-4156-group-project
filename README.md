@@ -96,52 +96,9 @@ coms-4156-group-project/
 
 This structure includes both backend (Spring Boot) and frontend (React/TypeScript) code, configuration files, resources, and build artifacts. Subfolders under `src/main/java/com/columbia/coms4156/citationservice/` include controllers, models, repositories, services, exceptions, and utilities. The `client` directory contains the React client app. The `target` directory contains build outputs and reports.
 
-## Class and Database Design
-See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
-
-## Getting Started
-
-### Prerequisites
-
-- Java 17 or higher
-- Maven 3.6 or higher
-
-### Running the Application
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd coms-4156-group-project
-   ```
-
-2. **Build the project**
-   ```bash
-   mvn clean compile
-   ```
-
-3. **Connect to the Database**
-  - Add this file to your local repo from other devs. Do NOT commit it to version control:
-      - `src/main/resources/application-dev.properties`
-      - This file contains environment-specific credentials and connection settings used when running the app against an external (non-H2) database.
-  - Navigate to this [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page and turn on the server instance.
-  - Before you can connect from your machine, add your public IP address to the Cloud SQL instance's authorized networks. If you do not add your IP, the instance will refuse connections. Use the Cloud Console networking page for the instance:
-      - https://console.cloud.google.com/sql/instances/ase-project/connections/networking?authuser=1&project=not-founders
-
-3. **Run the application**
-   ```bash
-   mvn spring-boot:run
-   ```
-   You should see the following text in your terminal: ✅ Successfully connected to database: jdbc:postgresql://34.67.102.29:5432/ase-project?sslmode=require
-
-4. **Access the application**
-   - API Base URL: `http://localhost:8080`
-   - Database: https://console.cloud.google.com/sql/instances/ase-project/studio?authuser=1&project=not-founders 
-      - Access given upon request.
-
-5. **Tear Down**
-  - Once done with using the application, ensure you turn off the CloudSQL server on the [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page.
-
 ## API Endpoints
+
+The base URL for the deployed API is: `https://citation-service-366055417335.us-central1.run.app/api`
 
 ### SourceController
 
@@ -341,6 +298,51 @@ Orwell, George. _1984_. Secker & Warburg, 1949.
   }
 }
 ```
+
+## Class and Database Design
+See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
+
+## Getting Started
+
+### Prerequisites
+
+- Java 17 or higher
+- Maven 3.6 or higher
+
+### Running the Application
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd coms-4156-group-project
+   ```
+
+2. **Build the project**
+   ```bash
+   mvn clean compile
+   ```
+
+3. **Connect to the Database**
+  - Add this file to your local repo from other devs. Do NOT commit it to version control:
+      - `src/main/resources/application-dev.properties`
+      - This file contains environment-specific credentials and connection settings used when running the app against an external (non-H2) database.
+  - Navigate to this [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page and turn on the server instance.
+  - Before you can connect from your machine, add your public IP address to the Cloud SQL instance's authorized networks. If you do not add your IP, the instance will refuse connections. Use the Cloud Console networking page for the instance:
+      - https://console.cloud.google.com/sql/instances/ase-project/connections/networking?authuser=1&project=not-founders
+
+3. **Run the application**
+   ```bash
+   mvn spring-boot:run
+   ```
+   You should see the following text in your terminal: ✅ Successfully connected to database: jdbc:postgresql://34.67.102.29:5432/ase-project?sslmode=require
+
+4. **Access the application**
+   - API Base URL: `http://localhost:8080`
+   - Database: https://console.cloud.google.com/sql/instances/ase-project/studio?authuser=1&project=not-founders 
+      - Access given upon request.
+
+5. **Tear Down**
+  - Once done with using the application, ensure you turn off the CloudSQL server on the [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page.
 
 ## Error Codes
 
@@ -654,4 +656,3 @@ For brevity, our use cases are summarized in the table below. While not every pr
 - Add video backfilling capabilities
 - Add user authentication
 - Deployment & sample client creation
-
