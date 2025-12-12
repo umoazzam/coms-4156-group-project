@@ -96,6 +96,30 @@ coms-4156-group-project/
 
 This structure includes both backend (Spring Boot) and frontend (React/TypeScript) code, configuration files, resources, and build artifacts. Subfolders under `src/main/java/com/columbia/coms4156/citationservice/` include controllers, models, repositories, services, exceptions, and utilities. The `client` directory contains the React client app. The `target` directory contains build outputs and reports.
 
+### Static Analysis and Style Checking
+
+As part of our CI pipeline, we integrated **PMD static analysis** and **Checkstyle** to ensure a high-quality and consistent codebase.
+
+### PMD Static Analysis
+Our CI loop automatically runs **PMD** on every commit. The following before/after reports demonstrate that the team reviewed and fixed the majority of PMD violations identified during development.
+
+#### **Before Fixing PMD Errors**
+![PMD Before](assets/pmd-before.png)
+
+#### **After Fixing PMD Errors**
+![PMD After](assets/pmd-after.png)
+
+These screenshots illustrate the improvements made after resolving the issues reported by PMD.
+
+### Checkstyle Enforcement
+The CI pipeline also runs **Checkstyle** across the entire service codebase using our custom `checkstyle.xml` ruleset.
+
+- Any style or formatting violations failed the CI pipeline.
+- The team iteratively fixed all Checkstyle warnings and errors.
+- This guarantees consistent formatting, naming conventions, and structure throughout the project.
+
+Both PMD and Checkstyle are run automatically as part of the CI loop to ensure ongoing code quality and maintainability.
+
 ### Developing a Third-Party Client
 
 This service is designed to be accessible by any third-party client capable of making HTTP requests. To develop your own client, you will need to interact with our RESTful API. Here’s what you need to know to get started:
