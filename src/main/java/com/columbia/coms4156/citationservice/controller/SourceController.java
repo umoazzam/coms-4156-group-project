@@ -85,7 +85,9 @@ public class SourceController {
     }
 
     Book savedBook = sourceService.saveBook(book);
-    LOGGER.info("Successfully created book with ID: {}", savedBook.getId());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully created book with ID: {}", savedBook.getId());
+    }
     return ResponseUtil.created(savedBook);
   }
 
@@ -100,7 +102,9 @@ public class SourceController {
   public ResponseEntity<?> getAllBooks(HttpServletRequest request) {
     LOGGER.info("Received request to retrieve all books");
     List<Book> books = sourceService.getAllBooks();
-    LOGGER.info("Successfully retrieved {} books", books.size());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully retrieved {} books", books.size());
+    }
     return ResponseUtil.ok(books);
   }
 
@@ -199,7 +203,9 @@ public class SourceController {
     }
 
     Video savedVideo = sourceService.saveVideo(video);
-    LOGGER.info("Successfully created video with ID: {}", savedVideo.getId());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully created video with ID: {}", savedVideo.getId());
+    }
     return ResponseUtil.created(savedVideo);
   }
 
@@ -214,7 +220,9 @@ public class SourceController {
   public ResponseEntity<?> getAllVideos(HttpServletRequest request) {
     LOGGER.info("Received request to retrieve all videos");
     List<Video> videos = sourceService.getAllVideos();
-    LOGGER.info("Successfully retrieved {} videos", videos.size());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully retrieved {} videos", videos.size());
+    }
     return ResponseUtil.ok(videos);
   }
 
@@ -314,7 +322,9 @@ public class SourceController {
     }
 
     Article savedArticle = sourceService.saveArticle(article);
-    LOGGER.info("Successfully created article with ID: {}", savedArticle.getId());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully created article with ID: {}", savedArticle.getId());
+    }
     return ResponseUtil.created(savedArticle);
   }
 
@@ -329,7 +339,9 @@ public class SourceController {
   public ResponseEntity<?> getAllArticles(HttpServletRequest request) {
     LOGGER.info("Received request to retrieve all articles");
     List<Article> articles = sourceService.getAllArticles();
-    LOGGER.info("Successfully retrieved {} articles", articles.size());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully retrieved {} articles", articles.size());
+    }
     return ResponseUtil.ok(articles);
   }
 
@@ -438,7 +450,9 @@ public class SourceController {
       return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
     SourceBatchResponse resp = sourceService.addOrAppendSources(request, submissionId);
-    LOGGER.info("Successfully processed bulk sources. SubmissionId: {}", resp.getSubmissionId());
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Successfully processed bulk sources. SubmissionId: {}", resp.getSubmissionId());
+    }
     return ResponseUtil.ok(resp);
   }
 }

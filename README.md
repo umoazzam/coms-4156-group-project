@@ -34,7 +34,10 @@ To view the original project proposal, click [here](https://docs.google.com/docu
 
 ```
 coms-4156-group-project/
+├── .github/
+│   └── workflows/
 ├── checkstyle.xml
+├── Dockerfile
 ├── pom.xml
 ├── README.md
 ├── t2-branch-coverage-report.html
@@ -672,11 +675,25 @@ We used Checkstyle to ensure code quality and adherence to coding standards. The
 mvn checkstyle:check
 ```
 
+### CI/CD and Deployment
+The project uses **GitHub Actions** for Continuous Integration and Deployment.
+- **Workflow**: Defined in `.github/workflows/ci.yml`.
+- **Process**:
+    1.  **Build and Test**: Runs Checkstyle, PMD, and tests (JUnit/Mockito) with coverage validation.
+    2.  **Containerization**: Builds a Docker image using the `Dockerfile`.
+    3.  **Deployment**: Deploys the container to **Google Cloud Run** (automatically on push to `main`).
+- **Configuration**: The application runs with `SPRING_PROFILES_ACTIVE=prod` in the deployed environment.
+
 ### Logging
-We use **SLF4J** with **Logback** for logging. Logs are persisted to the `logs/` directory in the project root.
-- **File**: `logs/application.log`
-- **Rotation**: Daily rotation with a 30-day history and 3GB total size cap.
+We use **SLF4J** with **Logback** for logging, with different configurations for development and production environments.
 - **Configuration**: `src/main/resources/logback-spring.xml`
+- **Development (`dev` profile)**:
+    - Logs to **Console** (human-readable text) and **File** (`logs/application.log`).
+    - **File Rotation**: Daily rotation with a 30-day history and 3GB total size cap.
+- **Production (`prod` profile)**:
+    - Logs to **Console** (JSON format) only.
+    - Uses `LogstashEncoder` for structured logging, which integrates seamlessly with Google Cloud Logging.
+    - File logging is disabled to suit the ephemeral nature of containerized environments.
 
 ### AI Usage
 For this project, we used GitHub Copilot to assist with code generation and troubleshooting. GitHub Copilot is freely available for students through the [GitHub Student Developer Pack](https://education.github.com/pack).
