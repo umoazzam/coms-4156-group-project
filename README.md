@@ -570,7 +570,7 @@ This configuration is key to allowing multiple client instances, potentially run
 
 This section documents user stories and a corresponding set of Postman tests to ensure the end-to-end functionality of the client and the citation service API.
 
-**Postman Collection:** [Link to Postman Collection]())
+**Postman Collection:** [Link to Postman Collection](https://dark-desert-81386.postman.co/workspace/My-Workspace~944de483-7347-4047-89cb-e75c81e1ba7b/collection/32914220-d96cfb1c-3cc6-48fc-993f-46baea892753?action=share&source=copy-link&creator=32914220)
 
 #### User Stories
 
