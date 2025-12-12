@@ -72,8 +72,11 @@ public class User {
 
     /**
      * Default constructor for User.
+     * Required by JPA for entity instantiation.
      */
-    public User() { }
+    public User() {
+        // Empty constructor required by JPA
+    }
 
     /**
      * Constructor for User with username and password.

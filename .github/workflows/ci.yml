@@ -23,7 +23,11 @@ jobs:
         
     - name: Run Checkstyle
       run: mvn checkstyle:check
-      
+
+    - name: Run PMD Check
+      run: mvn pmd:check
+      continue-on-error: false
+
     - name: Compile code
       run: mvn clean compile
       

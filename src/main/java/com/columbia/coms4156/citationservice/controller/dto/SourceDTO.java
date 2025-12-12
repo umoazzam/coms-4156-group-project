@@ -48,12 +48,6 @@ public class SourceDTO {
     /** The director of the source, if applicable. */
     private String edition;
 
-
-    /**
-     * Default constructor for SourceDTO.
-     */
-    public SourceDTO() { }
-
     /**
      * Gets the media type.
      *
