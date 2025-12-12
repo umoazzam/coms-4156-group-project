@@ -809,5 +809,252 @@ class CitationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.Citations['1']").value("Chicago Book citation"));
     }
+
+    @Test
+    @DisplayName("POST /api/cite/book returns 400 for MethodArgumentNotValidException (missing title)")
+    void generateBookCitationFromData_MethodArgumentNotValidException_EmptyTitle() throws Exception {
+        // Arrange - Book with missing title field to trigger @NotBlank validation
+        // Using a Map to create JSON without title field
+        Map<String, String> bookMap = new HashMap<>();
+        bookMap.put("author", "F. Scott Fitzgerald");
+        String jsonWithoutTitle = objectMapper.writeValueAsString(bookMap);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/book?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonWithoutTitle))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Validation failed")));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/book returns 400 for MethodArgumentNotValidException (missing author)")
+    void generateBookCitationFromData_MethodArgumentNotValidException_EmptyAuthor() throws Exception {
+        // Arrange - Book with missing author field to trigger @NotBlank validation
+        Map<String, String> bookMap = new HashMap<>();
+        bookMap.put("title", "The Great Gatsby");
+        String jsonWithoutAuthor = objectMapper.writeValueAsString(bookMap);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/book?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonWithoutAuthor))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Validation failed")));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/video returns 400 for MethodArgumentNotValidException (missing title)")
+    void generateVideoCitationFromData_MethodArgumentNotValidException_EmptyTitle() throws Exception {
+        // Arrange - Video with missing title field to trigger @NotBlank validation
+        Map<String, String> videoMap = new HashMap<>();
+        videoMap.put("author", "3Blue1Brown");
+        String jsonWithoutTitle = objectMapper.writeValueAsString(videoMap);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/video?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonWithoutTitle))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Validation failed")));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/article returns 400 for MethodArgumentNotValidException (missing title)")
+    void generateArticleCitationFromData_MethodArgumentNotValidException_EmptyTitle() throws Exception {
+        // Arrange - Article with missing title field to trigger @NotBlank validation
+        Map<String, String> articleMap = new HashMap<>();
+        articleMap.put("author", "John Smith");
+        String jsonWithoutTitle = objectMapper.writeValueAsString(articleMap);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/article?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonWithoutTitle))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Validation failed")));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/video/{id} returns 400 for negative ID")
+    void generateVideoCitation_NegativeId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/video/{id}", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/article/{id} returns 400 for negative ID")
+    void generateArticleCitation_NegativeId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/article/{id}", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/video/{id} returns 400 for IllegalArgumentException")
+    void generateVideoCitation_IllegalArgumentException() throws Exception {
+        // Arrange
+        Long videoId = 2L;
+        Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
+        video.setId(videoId);
+
+        given(sourceService.findVideoById(videoId)).willReturn(Optional.of(video));
+        given(citationService.generateMLACitation(any(Video.class)))
+                .willThrow(new IllegalArgumentException("Video data is invalid"));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/video/{id}", videoId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/article/{id} returns 400 for IllegalArgumentException")
+    void generateArticleCitation_IllegalArgumentException() throws Exception {
+        // Arrange
+        Long articleId = 3L;
+        Article article = new Article("Machine Learning Basics", "John Smith");
+        article.setId(articleId);
+
+        given(sourceService.findArticleById(articleId)).willReturn(Optional.of(article));
+        given(citationService.generateMLACitation(any(Article.class)))
+                .willThrow(new IllegalArgumentException("Article data is invalid"));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/article/{id}", articleId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/video returns 400 for IllegalArgumentException")
+    void generateVideoCitationFromData_IllegalArgumentException() throws Exception {
+        // Arrange
+        Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
+
+        given(citationService.generateCitationByStyle(any(Video.class), any(String.class)))
+                .willThrow(new IllegalArgumentException("Invalid video data"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/video?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(video)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/article returns 400 for IllegalArgumentException")
+    void generateArticleCitationFromData_IllegalArgumentException() throws Exception {
+        // Arrange
+        Article article = new Article("Machine Learning Basics", "John Smith");
+
+        given(citationService.generateCitationByStyle(any(Article.class), any(String.class)))
+                .willThrow(new IllegalArgumentException("Invalid article data"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/article?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(article)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/article returns 500 for unexpected exception")
+    void generateArticleCitationFromData_UnexpectedException() throws Exception {
+        // Arrange
+        Article article = new Article("Machine Learning Basics", "John Smith");
+
+        given(citationService.generateCitationByStyle(any(Article.class), any(String.class)))
+                .willThrow(new RuntimeException("Unexpected error"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/article?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(article)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                .andExpect(jsonPath("$.status").value(500));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/article/{id} returns 500 for unexpected exception")
+    void generateArticleCitation_UnexpectedException() throws Exception {
+        // Arrange
+        Long articleId = 3L;
+        given(sourceService.findArticleById(articleId)).willThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/article/{id}", articleId))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                .andExpect(jsonPath("$.status").value(500));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/video returns 500 for unexpected exception")
+    void generateVideoCitationFromData_UnexpectedException() throws Exception {
+        // Arrange
+        Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
+
+        given(citationService.generateCitationByStyle(any(Video.class), any(String.class)))
+                .willThrow(new RuntimeException("Unexpected error"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/video?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(video)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                .andExpect(jsonPath("$.status").value(500));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/video uses default MLA style when not specified")
+    void generateVideoCitationFromData_DefaultStyle() throws Exception {
+        // Arrange
+        Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
+        String expectedCitation = "3Blue1Brown. _Introduction to Neural Networks_. ";
+
+        given(citationService.generateCitationByStyle(any(Video.class), eq("MLA")))
+                .willReturn(expectedCitation);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/video")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(video)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/article uses default MLA style when not specified")
+    void generateArticleCitationFromData_DefaultStyle() throws Exception {
+        // Arrange
+        Article article = new Article("Machine Learning Basics", "John Smith");
+        String expectedCitation = "Smith, John. \"Machine Learning Basics.\" ";
+
+        given(citationService.generateCitationByStyle(any(Article.class), eq("MLA")))
+                .willReturn(expectedCitation);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/article")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(article)))
+                .andExpect(status().isOk());
+    }
 }
 
