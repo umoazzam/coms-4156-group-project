@@ -96,52 +96,25 @@ coms-4156-group-project/
 
 This structure includes both backend (Spring Boot) and frontend (React/TypeScript) code, configuration files, resources, and build artifacts. Subfolders under `src/main/java/com/columbia/coms4156/citationservice/` include controllers, models, repositories, services, exceptions, and utilities. The `client` directory contains the React client app. The `target` directory contains build outputs and reports.
 
-## Class and Database Design
-See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
+### Developing a Third-Party Client
 
-## Getting Started
+This service is designed to be accessible by any third-party client capable of making HTTP requests. To develop your own client, you will need to interact with our RESTful API. Here’s what you need to know to get started:
 
-### Prerequisites
+1.  **API Base URL**: The live service is hosted on Google Cloud Run. The base URL for all API endpoints is: `https://citation-service-366055417335.us-central1.run.app/api`. For local development, the base URL is `http://localhost:8080/api`.
 
-- Java 17 or higher
-- Maven 3.6 or higher
+2.  **API Endpoints**: A comprehensive list of available endpoints, including HTTP methods and path parameters, can be found in the [API Endpoints](#api-endpoints) section.
 
-### Running the Application
+3.  **Data Schemas**: When sending data to the API (e.g., in the body of a `POST` or `PUT` request), your JSON objects must conform to the structures outlined in the [Source Object JSON Schemas](#source-object-json-schemas) section.
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd coms-4156-group-project
-   ```
+4.  **API Usage Examples**: For practical examples of how to make requests for common operations like creating sources and generating citations, please refer to the [API Usage](#api-usage) section.
 
-2. **Build the project**
-   ```bash
-   mvn clean compile
-   ```
+5.  **Error Handling**: The API uses standard HTTP status codes to indicate the outcome of a request. Your client should be prepared to handle potential errors. A summary of common error codes and their meanings is available in the [Error Codes](#error-codes) section.
 
-3. **Connect to the Database**
-  - Add this file to your local repo from other devs. Do NOT commit it to version control:
-      - `src/main/resources/application-dev.properties`
-      - This file contains environment-specific credentials and connection settings used when running the app against an external (non-H2) database.
-  - Navigate to this [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page and turn on the server instance.
-  - Before you can connect from your machine, add your public IP address to the Cloud SQL instance's authorized networks. If you do not add your IP, the instance will refuse connections. Use the Cloud Console networking page for the instance:
-      - https://console.cloud.google.com/sql/instances/ase-project/connections/networking?authuser=1&project=not-founders
-
-3. **Run the application**
-   ```bash
-   mvn spring-boot:run
-   ```
-   You should see the following text in your terminal: ✅ Successfully connected to database: jdbc:postgresql://34.67.102.29:5432/ase-project?sslmode=require
-
-4. **Access the application**
-   - API Base URL: `http://localhost:8080`
-   - Database: https://console.cloud.google.com/sql/instances/ase-project/studio?authuser=1&project=not-founders 
-      - Access given upon request.
-
-5. **Tear Down**
-  - Once done with using the application, ensure you turn off the CloudSQL server on the [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page.
+6.  **Stateless Architecture**: The API is stateless, meaning each request is processed independently without relying on a server-side session. Your client must send all necessary information with each request. The API also supports Cross-Origin Resource Sharing (CORS) from any origin, so you can make requests directly from a browser-based client.
 
 ## API Endpoints
+
+The base URL for the deployed API is: `https://citation-service-366055417335.us-central1.run.app/api`
 
 ### SourceController
 
@@ -342,6 +315,51 @@ Orwell, George. _1984_. Secker & Warburg, 1949.
 }
 ```
 
+## Class and Database Design
+See [here](https://www.canva.com/design/DAG2NLXV3-U/WCSwNCgI2ZkAA9SOC6vNbQ/edit) for design.
+
+## Getting Started
+
+### Prerequisites
+
+- Java 17 or higher
+- Maven 3.6 or higher
+
+### Running the Application
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd coms-4156-group-project
+   ```
+
+2. **Build the project**
+   ```bash
+   mvn clean compile
+   ```
+
+3. **Connect to the Database**
+  - Add this file to your local repo from other devs. Do NOT commit it to version control:
+      - `src/main/resources/application-dev.properties`
+      - This file contains environment-specific credentials and connection settings used when running the app against an external (non-H2) database.
+  - Navigate to this [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page and turn on the server instance.
+  - Before you can connect from your machine, add your public IP address to the Cloud SQL instance's authorized networks. If you do not add your IP, the instance will refuse connections. Use the Cloud Console networking page for the instance:
+      - https://console.cloud.google.com/sql/instances/ase-project/connections/networking?authuser=1&project=not-founders
+
+3. **Run the application**
+   ```bash
+   mvn spring-boot:run
+   ```
+   You should see the following text in your terminal: ✅ Successfully connected to database: jdbc:postgresql://34.67.102.29:5432/ase-project?sslmode=require
+
+4. **Access the application**
+   - API Base URL: `http://localhost:8080`
+   - Database: https://console.cloud.google.com/sql/instances/ase-project/studio?authuser=1&project=not-founders 
+      - Access given upon request.
+
+5. **Tear Down**
+  - Once done with using the application, ensure you turn off the CloudSQL server on the [Google Console CloudSQL](https://console.cloud.google.com/sql/instances/ase-project/overview?authuser=1&project=not-founders) page.
+
 ## Error Codes
 
 The API uses standard HTTP status codes to indicate the success or failure of a request. Here is a summary of the error codes the API can return:
@@ -428,6 +446,7 @@ This is the format of JSON objects to be submitted with the various requests abo
 
 ### Backfilling
 Backfilling is currently available for the Books and Articles. Books are backfilled using the external API, [Google Books API](https://developers.google.com/books) and Articles are backfilled using the external API, [CrossRef API](https://api.crossref.org/swagger-ui/index.html). Book sources that you desire to be backfilled must include an ISBN, and Article sources must include a DOI.
+
 
 ## Client Application
 
@@ -527,7 +546,7 @@ This configuration is key to allowing multiple client instances, potentially run
 
 This section documents user stories and a corresponding set of Postman tests to ensure the end-to-end functionality of the client and the citation service API.
 
-**Postman Collection:** [Link to Postman Collection]
+**Postman Collection:** [Link to Postman Collection]())
 
 #### User Stories
 
@@ -612,7 +631,7 @@ The following Postman tests simulate the client's interaction with the API.
 For project management and task tracking, we used Notion. You can find the project board here: [T2: First Iteration Project Board](https://www.notion.so/27bb9d8608c380aaaeb7f3426296a032?v=27bb9d8608c381eab889000c5e024d6d&source=copy_link)
 
 ### Testing Framework
-For unit testing, we utilized JUnit and Mockito. Integration tests can be added in future iterations. We also used Postman for API endpoint testing. Our test cases are located in the `src/test/java/com/columbia/coms4156/citationservice/src/test` directory.
+For unit testing, we utilized JUnit and Mockito. We also used Postman for API endpoint/integration testing. Our test cases are located in the `src/test/java/com/columbia/coms4156/citationservice/src/test` directory.
 
 For branch coverage analysis, we used JaCoCo. To generate a branch coverage report, run the following Maven command:
 
@@ -640,18 +659,13 @@ For this project, we used GitHub Copilot to assist with code generation and trou
 
 For brevity, our use cases are summarized in the table below. While not every prompt and response is documented here, these examples illustrate the types of assistance we received from the AI tool throughout the development process, as well as what files were affected by the changes.
 
-| Task                                                         | Prompt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Summary of Response                                                                  | File(s) Affected                                                                               |
-|--------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| Set up general Spring Boot project structure                 | "I want your help in establishing starter code for a project in which we will be creating an API-based citation creation and management service that allows clients to build, maintain, and enrich libraries of sources while automatically generating formatted citations and bibliographies. To start, we are only going to focus on MLA citations and books, so that we can set up demoable functionality. The end goal of this demo deliverable is the ability to locally call the API from postman or other methods with a JSON body containing information about a book, with the API returning the citation text. First, I want your help in setting up the files needed for this API service to run successfully, as well as setting up skeleton code for the book model file, service file etc (actual functionality will be worked on later). After this is done, I will provide further specifications for the service and model. For this project, we would like to use Java/SpringBoot." | Generated basic Spring Boot project structure with necessary files and dependencies. | Multiple files including main application, controller, model, repository, and service classes. |
-| Set up persistent database code and model set up             | “How do I connect a PostgreSQL Cloud SQL instance to a Spring Boot app?” & “What files do I need to edit to connect Spring Boot to Cloud SQL?”, “What files do I need to edit to connect Spring Boot to Cloud SQL?”, etc.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Helped set up persistent data storage connection and troubleshoot connection issues. | application.properties, DatabaseStartupCheck.java, pom.xml, model layer, repository layer, etc |
-| Set up parameter validation and unit testing for model layer | "Set up basic parameter validation in this class for the setter methods and then create a unit test file for the class which tests the setting methods"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Helped set up parameter validation and unit tests for model layer classes.           | Book.java, BookTest.java, Video.java, VideoTest.java, Article.java, ArticleTest.java, etc      |
-| PR Description                                               | "Please help me write a detailed PR description for the following code changes: ...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Created a comprehensive PR description outlining the changes made.                   | N/A (Documentation)                                                                            |
-| Fixing Checkstyle Errors/Updating Checkstyle Config          | "Help fix the checkstyle errors in this file: ... Also, please update the checkstyle configuration file to allow for longer line lengths (up to 100 characters)", "What script can fix the trailing spaces and line length issues in the controllers?"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Resolved Checkstyle errors and updated configuration as requested.                   | Multiple Java files and checkstyle.xml                                                         |
-| Updating README                                              | "Update the file structure in the README"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | New file structure as seen above.                                                    | README.md                                                                                      |
-
-
-## Next Steps
-- Add video backfilling capabilities
-- Add user authentication
-- Deployment & sample client creation
+| Task                                                         | Prompt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Summary of Response                                                                                                       | File(s) Affected                                                                               |
+|--------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| Set up general Spring Boot project structure                 | "I want your help in establishing starter code for a project in which we will be creating an API-based citation creation and management service that allows clients to build, maintain, and enrich libraries of sources while automatically generating formatted citations and bibliographies. To start, we are only going to focus on MLA citations and books, so that we can set up demoable functionality. The end goal of this demo deliverable is the ability to locally call the API from postman or other methods with a JSON body containing information about a book, with the API returning the citation text. First, I want your help in setting up the files needed for this API service to run successfully, as well as setting up skeleton code for the book model file, service file etc (actual functionality will be worked on later). After this is done, I will provide further specifications for the service and model. For this project, we would like to use Java/SpringBoot." | Generated basic Spring Boot project structure with necessary files and dependencies.                                      | Multiple files including main application, controller, model, repository, and service classes. |
+| Set up persistent database code and model set up             | “How do I connect a PostgreSQL Cloud SQL instance to a Spring Boot app?” & “What files do I need to edit to connect Spring Boot to Cloud SQL?”, “What files do I need to edit to connect Spring Boot to Cloud SQL?”, etc.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Helped set up persistent data storage connection and troubleshoot connection issues.                                      | application.properties, DatabaseStartupCheck.java, pom.xml, model layer, repository layer, etc |
+| Set up parameter validation and unit testing for model layer | "Set up basic parameter validation in this class for the setter methods and then create a unit test file for the class which tests the setting methods"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Helped set up parameter validation and unit tests for model layer classes.                                                | Book.java, BookTest.java, Video.java, VideoTest.java, Article.java, ArticleTest.java, etc      |
+| PR Description                                               | "Please help me write a detailed PR description for the following code changes: ...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Created a comprehensive PR description outlining the changes made.                                                        | N/A (Documentation)                                                                            |
+| Fixing Checkstyle Errors/Updating Checkstyle Config          | "Help fix the checkstyle errors in this file: ... Also, please update the checkstyle configuration file to allow for longer line lengths (up to 100 characters)", "What script can fix the trailing spaces and line length issues in the controllers?"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Resolved Checkstyle errors and updated configuration as requested.                                                        | Multiple Java files and checkstyle.xml                                                         |
+| Updating README                                              | "Update the file structure in the README"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | New file structure as seen above.                                                                                         | README.md                                                                                      |
+| Add client README setup guide                                | "Add a set up guide to the client's readme to help users understand how to go about testing the API with the demo client we made. Use the main README and API/client code as needed to understand what set up requires"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Generated a setup guide for the client's README, explaining how to run the demo client and connect it to the backend API. | client/README.md                                                                               |
 
