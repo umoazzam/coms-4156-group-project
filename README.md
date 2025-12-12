@@ -546,7 +546,7 @@ This configuration is key to allowing multiple client instances, potentially run
 
 This section documents user stories and a corresponding set of Postman tests to ensure the end-to-end functionality of the client and the citation service API.
 
-**Postman Collection:** [Link to Postman Collection]
+**Postman Collection:** [Link to Postman Collection]())
 
 #### User Stories
 
@@ -631,7 +631,7 @@ The following Postman tests simulate the client's interaction with the API.
 For project management and task tracking, we used Notion. You can find the project board here: [T2: First Iteration Project Board](https://www.notion.so/27bb9d8608c380aaaeb7f3426296a032?v=27bb9d8608c381eab889000c5e024d6d&source=copy_link)
 
 ### Testing Framework
-For unit testing, we utilized JUnit and Mockito. Integration tests can be added in future iterations. We also used Postman for API endpoint testing. Our test cases are located in the `src/test/java/com/columbia/coms4156/citationservice/src/test` directory.
+For unit testing, we utilized JUnit and Mockito. We also used Postman for API endpoint/integration testing. Our test cases are located in the `src/test/java/com/columbia/coms4156/citationservice/src/test` directory.
 
 For branch coverage analysis, we used JaCoCo. To generate a branch coverage report, run the following Maven command:
 
