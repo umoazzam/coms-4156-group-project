@@ -477,6 +477,16 @@ class CitationControllerTest {
                 .andExpect(jsonPath("$.status").value(400));
     }
 
+    @Test
+    @DisplayName("GET /api/cite/{citationId} returns 400 for negative ID")
+    void generateCitationForSource_NegativeId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/{citationId}", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
 
     @Test
     @DisplayName("GET /api/cite/{citationId} returns 500 for unexpected exception")
@@ -563,6 +573,38 @@ class CitationControllerTest {
                 .andExpect(jsonPath("$.status").value(400));
     }
 
+    @Test
+    @DisplayName("GET /api/cite/group/{submissionId} returns 400 for negative ID")
+    void generateCitationsForGroup_NegativeId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/group/{submissionId}", -1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/book returns 400 for invalid JSON")
+    void generateBookCitationFromData_InvalidJson() throws Exception {
+        // Act & Assert - testing GlobalExceptionHandler for invalid JSON
+        mockMvc.perform(post("/api/cite/book?style=MLA")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("invalid json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/{citationId} returns 400 for invalid ID type")
+    void generateCitationForSource_InvalidIdType() throws Exception {
+        // Act & Assert - testing GlobalExceptionHandler branch where requiredType is null (line 155)
+        // Passing invalid ID type (non-numeric) should trigger MethodArgumentTypeMismatchException
+        mockMvc.perform(get("/api/cite/{citationId}", "invalid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
+
 
     @Test
     @DisplayName("GET /api/cite/group/{submissionId} returns 500 for unexpected exception")
@@ -614,6 +656,158 @@ class CitationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.submissionId").value(5))
                 .andExpect(jsonPath("$.Citations['1']").value("Citation with backfill"));
+    }
+
+    // ==================== Additional Branch Coverage Tests ====================
+
+    @Test
+    @DisplayName("POST /api/cite/book returns 400 for empty style")
+    void generateBookCitationFromData_EmptyStyle() throws Exception {
+        // Arrange
+        Book book = new Book("The Great Gatsby", "F. Scott Fitzgerald");
+
+        // Act & Assert - Spring will use default "MLA" for empty string, so we test whitespace
+        mockMvc.perform(post("/api/cite/book?style=   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(book)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/book returns 400 for whitespace-only style")
+    void generateBookCitationFromData_WhitespaceStyle() throws Exception {
+        // Arrange
+        Book book = new Book("The Great Gatsby", "F. Scott Fitzgerald");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/book?style=   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(book)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/video supports Chicago style")
+    void generateVideoCitationFromData_ChicagoStyle() throws Exception {
+        // Arrange
+        Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
+        String expectedCitation = "3Blue1Brown. \"Introduction to Neural Networks.\" ";
+
+        given(citationService.generateCitationByStyle(any(Video.class), eq("CHICAGO")))
+                .willReturn(expectedCitation);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/video?style=CHICAGO")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(video)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedCitation));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/video returns 400 for empty style")
+    void generateVideoCitationFromData_EmptyStyle() throws Exception {
+        // Arrange
+        Video video = new Video("Introduction to Neural Networks", "3Blue1Brown");
+
+        // Act & Assert - Spring will use default "MLA" for empty string, so we test whitespace
+        mockMvc.perform(post("/api/cite/video?style=   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(video)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/article supports Chicago style")
+    void generateArticleCitationFromData_ChicagoStyle() throws Exception {
+        // Arrange
+        Article article = new Article("Machine Learning Basics", "John Smith");
+        String expectedCitation = "Smith, John. \"Machine Learning Basics.\" ";
+
+        given(citationService.generateCitationByStyle(any(Article.class), eq("CHICAGO")))
+                .willReturn(expectedCitation);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/cite/article?style=CHICAGO")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(article)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedCitation));
+    }
+
+    @Test
+    @DisplayName("POST /api/cite/article returns 400 for empty style")
+    void generateArticleCitationFromData_EmptyStyle() throws Exception {
+        // Arrange
+        Article article = new Article("Machine Learning Basics", "John Smith");
+
+        // Act & Assert - Spring will use default "MLA" for empty string, so we test whitespace
+        mockMvc.perform(post("/api/cite/article?style=   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(article)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/{citationId} returns 400 for empty style")
+    void generateCitationForSource_EmptyStyle() throws Exception {
+        // Act & Assert - Spring will use default "MLA" for empty string, so we test whitespace
+        mockMvc.perform(get("/api/cite/{citationId}?style=   ", 10))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/{citationId} supports Chicago style")
+    void generateCitationForSource_ChicagoStyle() throws Exception {
+        // Arrange
+        Long citationId = 10L;
+        CitationResponse response = new CitationResponse("10", "Chicago citation text");
+
+        given(citationService.generateCitationForSource(eq(citationId), eq("CHICAGO"), eq(false)))
+                .willReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/{citationId}?style=CHICAGO", citationId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.CitationString").value("Chicago citation text"));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/group/{submissionId} returns 400 for empty style")
+    void generateCitationsForGroup_EmptyStyle() throws Exception {
+        // Act & Assert - Spring will use default "MLA" for empty string, so we test whitespace
+        mockMvc.perform(get("/api/cite/group/{submissionId}?style=   ", 5))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @DisplayName("GET /api/cite/group/{submissionId} supports Chicago style")
+    void generateCitationsForGroup_ChicagoStyle() throws Exception {
+        // Arrange
+        Long submissionId = 5L;
+        Map<String, String> citations = new HashMap<>();
+        citations.put("1", "Chicago Book citation");
+        GroupCitationResponse response = new GroupCitationResponse(submissionId, citations);
+
+        given(citationService.generateCitationsForGroup(eq(submissionId), eq("CHICAGO"), eq(false)))
+                .willReturn(response);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/cite/group/{submissionId}?style=CHICAGO", submissionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.Citations['1']").value("Chicago Book citation"));
     }
 }
 
