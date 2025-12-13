@@ -106,3 +106,4 @@ jobs:
             HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
             DB_DRIVER=org.postgresql.Driver
             SPRING_PROFILES_ACTIVE=prod
+            JPA_HBM2DDL=update
